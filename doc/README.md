@@ -429,6 +429,74 @@ example of wiring the engine to a UI: it subscribes to `comp.frame`, calls
 `comp.setFrame()` on `<input type=range>` input (pausing while held), and
 toggles `comp.setLoop()` from a checkbox.
 
+## Audio
+
+`@konva-motion/core` ships an `Audio` node for timeline-driven sound, controlled
+by a composition-level **mixer**. Like Remotion's `<Audio>`, you place it inside
+a `Sequence` and it plays only while the playhead is in that sequence's range,
+trimmed/looped/rate-adjusted to taste. `Audio` is an invisible `Konva.Group`, so
+it lives in the scene tree and is discovered, range-gated, and synced exactly
+like `Video` — it just produces no pixels.
+
+```ts
+import { Composition, Sequence, Audio } from "@konva-motion/core";
+
+const music = new Sequence({ from: 0, durationInFrames: 300 });
+music.add(new Audio({ src: "/theme.mp3", volume: 0.6, trimAfter: 300, loop: true }));
+comp.add(music);
+
+// A second track on its own sequence, starting at frame 90.
+const sfx = new Sequence({ from: 90, durationInFrames: 30 });
+sfx.add(new Audio({ src: "/whoosh.mp3" }));
+comp.add(sfx);
+
+comp.play(); // audio is audible after a user gesture (e.g. the play button)
+```
+
+### `new Audio(opts)`
+
+- `src: string` — required. URL of the audio file.
+- `name?: string` — label shown in mixer UIs (defaults to `src`).
+- `id?: string` — stable id for the node and rendered audio assets.
+- `volume?: number` — intrinsic level `0..1` (default `1`), scaled by the mixer
+  master.
+- `muted?: boolean` — intrinsic mute (default `false`).
+- `trimBefore?: number` — frames trimmed from the start of the media.
+- `trimAfter?: number` — exclusive frame bound; required for `loop` to have a
+  length to wrap. Without it the clip plays forward and freezes at its natural
+  end (matching `Video`).
+- `loop?: boolean` — repeat the trimmed clip within its sequence window.
+- `playbackRate?: number` — speed multiplier (default `1`).
+- `startFrom`/`endAt` — deprecated aliases of `trimBefore`/`trimAfter`.
+- `sourceFactory?` — inject an alternative `AudioSource` (defaults to
+  `BrowserAudioSource`, which wraps an `HTMLAudioElement`).
+
+Methods: `setVolume(0..1)`, `setMuted(bool)`, `setPlaybackRate(rate)`.
+Readonly signals: `volume`, `muted`. Helper: `isAudioNode(node)`.
+
+In **preview** the underlying `<audio>` element plays in realtime; the driver
+only seeks to correct drift > 0.45s, and fast-seeks to the exact frame while
+paused/scrubbing. **Browsers block un-muted playback until a user gesture** — the
+element starts muted and becomes audible via the mixer once the user has
+interacted with the page (the scrubber's play button counts). A failed `play()`
+is logged, not thrown.
+
+### The mixer — `comp.mixer`
+
+Every `Audio` (and `Video`) added under a `Sequence` is auto-registered with
+`comp.mixer`, a master volume/mute bus. A channel's effective output is
+`master × channel.volume`, muted when `masterMuted || channel.muted`.
+
+```ts
+comp.mixer.setVolume(0.8);     // master 0..1
+comp.mixer.setMuted(true);     // master mute
+comp.mixer.volume.subscribe((v) => { /* update a slider */ });
+comp.mixer.channels;           // AudioChannel[] — build per-track UIs
+```
+
+The demo scrubber ([demo/src/scrubber.ts](../demo/src/scrubber.ts)) wires a
+master volume slider and mute checkbox to `comp.mixer`.
+
 ## Server / offline rendering
 
 `play()` is browser-only, but `setFrame(n)` works anywhere. Step manually:
@@ -438,6 +506,18 @@ for (let f = 0; f < comp.durationInFrames.get(); f++) {
   comp.setFrame(f);
   // ...export comp.toDataURL() or pipe canvas elsewhere
 }
+```
+
+When the composition runs in `mode: "rendering"` (and during `renderFrame`),
+`Audio` does **not** decode or play — the engine captures canvas pixels and has
+no in-engine audio encoder. Instead each `Audio` records one sample per frame
+(`{ id, src, frame, mediaTime, volume, muted, playbackRate }`) which you read
+back afterward to mux the audio track externally (e.g. with ffmpeg):
+
+```ts
+comp.clearAudioAssets();
+for (let f = 0; f < comp.durationInFrames.get(); f++) await comp.renderFrame(f);
+const audio = comp.getAudioAssets(); // feed to your mux pass
 ```
 
 See [architecture.md](./architecture.md) and
