@@ -390,7 +390,22 @@ main.add(card);
   `gap`, `padding`. Sizes accept `number` or CSS-style `"50%"`.
 - **`Block(config)`** — everything `Flex` accepts, plus visual props:
   `background` (color string or `{ gradient }`), `borderSize`, `borderColor`,
-  `borderStyle: "solid" | "dashed"`, `shadow`, `cornerRadius`.
+  `borderStyle: "solid" | "dashed"`, `shadow`, `cornerRadius`. A `Block`
+  added directly to a `Sequence` lays itself out each frame, so a styled box
+  that hugs (or wraps) a single `Konva.Text` child works on its own — a
+  one-element text bubble:
+
+  ```ts
+  // wraps to 280px wide, height hugs the wrapped lines (omit width to hug one line)
+  const bubble = new Block({
+    x: 120, y: 80, width: 280,
+    flexDirection: "column", padding: [20, 30],
+    background: "#fff", cornerRadius: [24, 24, 24, 6],
+    shadow: { color: "#000", blur: 20, opacity: 0.18, offsetY: 6 },
+  });
+  bubble.add(new Konva.Text({ text: "Who's paying for the plumber?", fontSize: 34 }));
+  seq.add(bubble);
+  ```
 - **`Image(config)`** — fixed-box image with `objectFit`
   (`"cover" | "contain" | "fill" | "none"`), `objectPosition`, and
   `cornerRadius`. `src` accepts an `HTMLImageElement` or a URL string.
@@ -421,8 +436,9 @@ main.register((frame) => {
 ```
 
 Layout cadence: every active `Sequence` walks its direct children once per
-frame and calls `computeLayout()` on any that are `Flex`. A `Flex` outside
-a `Sequence` recomputes only when you call `computeLayout()` manually.
+frame and calls `computeLayout()` on any that are a `Flex` or a `Block`. A
+`Flex`/`Block` outside a `Sequence` recomputes only when you call
+`computeLayout()` manually.
 
 The scrubber ([demo/src/scrubber.ts](../demo/src/scrubber.ts)) is a small
 example of wiring the engine to a UI: it subscribes to `comp.frame`, calls
