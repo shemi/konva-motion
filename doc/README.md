@@ -328,8 +328,16 @@ opacity gating needed.
 
 ## Demo app
 
-The Vite demo (`pnpm dev`, [demo/](../demo)) ships with a sidebar of demos
-and a draggable timeline scrubber:
+The Vite demo (`pnpm dev`, [demo/](../demo)) is **KmStudio** — a React app
+([demo/src/studio/](../demo/src/studio)) with a grouped, searchable demo
+library in the sidebar, a centered fit-to-size viewport, a YouTube-style
+player bar, and a Props/Info/Code panel. Each demo has its own route
+(`/#/<demo-id>`) so a reload keeps you on the same demo. The player binds
+directly to the `Composition` signals (`frame`, `isPlaying`, `loop`,
+`mixer`) rather than running its own clock. Demos themselves are unchanged —
+[demo/src/studio/catalog.ts](../demo/src/studio/catalog.ts) wraps each
+`DemoDef` from [demo/src/demos/](../demo/src/demos) with display metadata.
+A sampling of what's in the library:
 
 - **Basic** — circle move + fading square sequence.
 - **Bouncing ball (loop)** — `loop: true` with ease-out fall and squash on impact.
@@ -448,10 +456,12 @@ frame and calls `computeLayout()` on any that are a `Flex` or a `Block`. A
 `Flex`/`Block` outside a `Sequence` recomputes only when you call
 `computeLayout()` manually.
 
-The scrubber ([demo/src/scrubber.ts](../demo/src/scrubber.ts)) is a small
-example of wiring the engine to a UI: it subscribes to `comp.frame`, calls
-`comp.setFrame()` on `<input type=range>` input (pausing while held), and
-toggles `comp.setLoop()` from a checkbox.
+The KmStudio player ([demo/src/studio/Player.tsx](../demo/src/studio/Player.tsx))
+is a small example of wiring the engine to a UI: a `useSignal` hook
+(`useSyncExternalStore` over a signal's `subscribe`/`get`) mirrors
+`comp.frame` into React, the scrub bar calls `comp.setFrame()` (pausing while
+dragged, resuming on release), and play/loop/volume map to
+`comp.play()`/`setLoop()`/`mixer.setVolume()`.
 
 ## Text component
 
@@ -594,8 +604,8 @@ comp.mixer.volume.subscribe((v) => { /* update a slider */ });
 comp.mixer.channels;           // AudioChannel[] — build per-track UIs
 ```
 
-The demo scrubber ([demo/src/scrubber.ts](../demo/src/scrubber.ts)) wires a
-master volume slider and mute checkbox to `comp.mixer`.
+The KmStudio player ([demo/src/studio/Player.tsx](../demo/src/studio/Player.tsx))
+wires a hover-expand master volume slider and mute toggle to `comp.mixer`.
 
 ## Server / offline rendering
 
