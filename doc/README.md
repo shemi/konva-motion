@@ -66,6 +66,10 @@ comp.play();
 - `durationInFrames: number` — total length.
 - `loop?: boolean` — when `true`, playback wraps to frame 0 instead of
   auto-pausing at the end. Default `false`.
+- `container?` — Konva's stage container. Optional in the browser: when
+  omitted, a detached `<div>` is created so the composition can be mounted
+  later via `setContainer` (e.g. handed to `<km-player>`). In non-browser
+  runtimes there's no DOM, so frames are driven with `setFrame`/`renderFrame`.
 
 The instance **is** a `Konva.Stage`. Adds itself to the stage via a
 `__KonvaMotionComposition` marker; constructing a second composition on the
@@ -74,6 +78,7 @@ same underlying stage throws.
 **Readonly signals** (`{ get(): T; subscribe(fn): () => void }`):
 
 - `frame`, `isPlaying`, `durationInFrames`, `loop`
+- `playbackRate` — speed multiplier (default `1`); negative plays in reverse.
 - `isStopped` — derived: `!isPlaying && frame === 0`
 - `isPaused` — derived: `!isPlaying && frame > 0`
 
@@ -86,6 +91,8 @@ same underlying stage throws.
 - `setFrame(n)` — clamped to `[0, durationInFrames - 1]`; applies updaters
   and emits `"time"`. Works on server (no rAF needed).
 - `setLoop(v)` — toggle looping at runtime; updates the `loop` signal.
+- `setPlaybackRate(rate)` — speed multiplier, clamped to `[-10, 10]` (`0`
+  throws). Negative plays in reverse. Resyncs the clock when playing.
 - `add(sequence)` — inherited `Konva.Stage.add`; the composition will tick
   any child that is a `Sequence`. Plain `Konva.Layer` children render
   normally (Konva auto-draws), they're just not gated by frame range.
@@ -325,6 +332,63 @@ flash.register((local) => { /* local: 0..29 */ });
 
 The layer is `visible(false)` and not drawn outside its range — no manual
 opacity gating needed.
+
+## Player (`@konva-motion/player`)
+
+A framework-agnostic **web-component player** (built with Lit) that plays a
+`Composition` like an HTML5 `<video>` — letterbox-scaling it to its box,
+fullscreen, keyboard control, and a Remotion-style imperative + event API.
+The composition is passed as a **property** (it's an object), and the player
+re-parents the stage into its own canvas via Konva's `setContainer`.
+
+```ts
+import "@konva-motion/player"; // registers <km-player> and the controls
+import "@konva-motion/player/styles.css"; // opt-in default styling (headless without it)
+
+const player = document.querySelector("km-player");
+player.composition = comp; // Composition — no container needed; core makes one
+```
+
+```html
+<km-player controls loop autoplay>
+  <km-player-overlay>
+    <km-player-play-button size="large"></km-player-play-button>
+  </km-player-overlay>
+  <km-player-controls>
+    <km-player-controls-row>
+      <km-player-progress></km-player-progress>
+    </km-player-controls-row>
+    <km-player-controls-row>
+      <km-player-play-toggle-button></km-player-play-toggle-button>
+      <km-player-sound-control collapsed></km-player-sound-control>
+      <km-player-time></km-player-time>
+      <km-player-space grow></km-player-space>
+      <km-player-loop-button></km-player-loop-button>
+      <km-player-fullscreen-button></km-player-fullscreen-button>
+    </km-player-controls-row>
+  </km-player-controls>
+</km-player>
+```
+
+`<km-player controls>` with no `<km-player-controls>` child renders a default
+control bar. **Light DOM** + opt-in CSS means every part is overridable with
+plain selectors (`.km-player__btn`, `km-player-controls`, …).
+
+- **Attributes:** `controls`, `loop`, `autoplay`, `muted`, `volume`,
+  `playbackrate`, `initialframe`, `no-click-to-play`, `no-space-key`,
+  `double-click-fullscreen`.
+- **Methods:** `play`, `pause`, `toggle`, `stop`, `seekTo`, `stepBy`,
+  `getCurrentFrame`, `isPlaying`, `setVolume`/`getVolume`,
+  `mute`/`unmute`/`setMuted`/`toggleMute`/`isMuted`,
+  `setLoop`/`toggleLoop`/`isLooping`, `setPlaybackRate`/`getPlaybackRate`,
+  `requestFullscreen`/`exitFullscreen`/`toggleFullscreen`/`isFullscreen`,
+  `getScale`.
+- **Events** (`CustomEvent`, bubbling): `play`, `pause`, `ended`, `seeked`,
+  `frameupdate`, `timeupdate` (throttled), `ratechange`, `volumechange`,
+  `mutechange`, `fullscreenchange`, `scalechange`, `error`.
+
+See [demo/src/studio/PlayerWcDemo.tsx](../demo/src/studio/PlayerWcDemo.tsx)
+(route `/#/player`) for a working example.
 
 ## Demo app
 
