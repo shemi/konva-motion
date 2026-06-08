@@ -10,6 +10,10 @@ one `batchDraw()` per active sequence per frame.
 The engine is agnostic: `play()` uses `requestAnimationFrame` in the browser;
 on the server, step frames manually with `setFrame(n)`.
 
+Chain scenes back-to-back with [`Series`](#new-seriesopts), and overlap them
+with cross-fades, wipes and WebGL shader transitions via
+[`@konva-motion/transitions`](./transitions.md).
+
 ## Install
 
 ```sh
@@ -120,6 +124,36 @@ and `visible(false)` otherwise. Only active sequence layers get `batchDraw`.
 
 - `seq.register((localFrame) => void): () => void` — runs every frame in
   range. `localFrame = currentFrame - from`. Returns an unsubscribe.
+
+### `new Series(opts?)`
+
+A sequential sequencer that auto-computes each `Sequence`'s `from`, so you
+never hand-compute offsets. Mirrors Remotion's `<Series>`.
+
+- `opts.from?: number` — frame the series starts at (default `0`).
+- `series.add({ durationInFrames, offset? }, (seq) => void): this` — append a
+  scene; the `build` callback populates the created `Sequence`. `offset`
+  (default `0`) is added to the previous scene's end: positive leaves a gap,
+  negative overlaps. A negative `offset` may not push a scene's `from` below the
+  series start or below `0` — it throws.
+- `series.sequences(): Sequence[]` — build one `Sequence` per scene with `from`
+  resolved. (Usually you don't call this — `comp.add(series)` does it for you.)
+- `series.durationInFrames` — total span, `max(from + duration) − series.from`.
+
+`Composition.add` accepts a `Series` (or any `SequenceProvider`) directly and
+adds each sequence it yields:
+
+```ts
+const series = new Series({ from: 0 });
+series
+  .add({ durationInFrames: 60 }, (seq) => seq.add(sceneA))
+  .add({ durationInFrames: 90, offset: -10 }, (seq) => seq.add(sceneB)); // overlaps by 10
+comp.add(series); // equivalent to: for (const seq of series.sequences()) comp.add(seq)
+```
+
+For overlapping scenes with cross-fades, wipes and shader effects, see
+[`@konva-motion/transitions`](./transitions.md) — its `TransitionSeries` builds
+on the same offset engine.
 
 ### `getComposition(stage)`
 
