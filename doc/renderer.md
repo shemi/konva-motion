@@ -182,21 +182,27 @@ paths or a `{ family: paths }` record.
 - **Capture reuses one canvas.** `captureCanvas()` composites into a single
   reused scratch canvas; allocating a fresh skia `Canvas` per frame leaks native
   memory and collapses throughput.
-- **skia-canvas retains decoded video pixels.** skia-canvas holds the native
-  pixels of every *distinct* frame fed to it (via `putImageData`/`Image`) for the
-  process lifetime — V8's GC can't reclaim it. So a video render's memory scales
-  with `frame area × distinct frames`. Mitigation: **`videoDecodeCap`** (a
-  `setupServerRendering` option, or `setVideoDecodeCap(w, h)`) decodes clips at a
-  smaller size — ideal for a dimmed/background bed Konva upscales anyway. For
-  very long, full-resolution, unique-frame video, render in shorter ranges
-  (`opts.range`) across separate processes and `concat`, or composite the video
-  in ffmpeg. Non-video renders (shapes/text/images) are unaffected and stay flat.
+- **Clear before each per-frame blit.** skia-canvas retains a native,
+  GC-invisible snapshot of a canvas's *prior* content every time you draw onto it
+  without first clearing — so an uncleared per-frame `putImageData`/`drawImage`
+  leaks ~one frame of RSS per frame for the process lifetime (per call, unbounded;
+  a looping clip doesn't plateau it). The streaming video source `clearRect`s its
+  offscreen canvas before each blit (`FfmpegVideoSource._paint`), so video memory
+  stays **flat and bounded — independent of render length** (confirmed: full-res
+  1080² with no cap plateaus at the same RSS over 600 and 1200 frames). konva's
+  `Layer.drawScene` and `Composition.captureCanvas` already clear before drawing,
+  so layers and the capture scratch never accumulated, and non-video renders were
+  always flat. **`videoDecodeCap`** (a `setupServerRendering` option, or
+  `setVideoDecodeCap(w, h)`) is now an *optional* throughput/size knob — decode a
+  dimmed/background bed at a smaller size Konva upscales anyway — not a leak
+  workaround.
 
 ## Out of scope (v1)
 
 - Multi-process / parallel rendering. A live `Composition` isn't serializable
-  across workers (Konva nodes aren't serializable); the renderer runs
-  sequentially. A future **segmented render** (a comp *factory* builds one comp
-  per worker, each renders a range, ffmpeg `concat`s) can drop into the loop, but
-  needs a factory entry — not a live instance.
+  across workers (Konva nodes aren't serializable); the renderer runs in one
+  process. With the per-frame clear in place, **memory is bounded single-process
+  even for long video**, so parallel is now purely a *speed* optimization (a comp
+  *factory* builds one comp per worker, each renders a range) — not a memory
+  necessity. Future work.
 - GPU rendering (`canvas.gpu`), image-sequence file output.
