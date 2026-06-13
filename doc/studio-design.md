@@ -72,7 +72,7 @@ packages/studio
   src/
     registry/                 # isomorphic, React-free, Node-safe
       defineRegistry.ts       # defineRegistry(RegistryEntry[]) -> Registry (entries/load/peek)
-      loadEntry.ts            # memoized load(id, props): await entry.load(props) once
+      loadEntry.ts            # memoized load(id): resolve entry.composition (unwrap default) once
       compositionInfo.ts      # read fps/duration/size off a (loaded) Composition
       deriveLayers.ts         # walk top-level Sequences -> StudioLayer[] (Video/Audio/Group)
       types.ts                # Registry, RegistryEntry, StudioLayer, Render* types
@@ -152,8 +152,13 @@ and `import registry from "./compositions"` without dragging in React. Only the
 To support **lazy loading**, the studio metadata is **not** put on the
 Composition (you can't read attributes off a composition that hasn't loaded).
 Instead each composition is declared as a registry **entry** at
-`defineRegistry` time — `{ id, …metadata, load }`. The Composition object stays
-clean; the studio reads only *runtime* facts off it once loaded.
+`defineRegistry` time — `{ id, …metadata, composition }`. The Composition object
+stays clean; the studio reads only *runtime* facts off it once loaded. A
+composition module **default-exports its `Composition`**; the entry's
+`composition` is that instance or a lazy loader (`() => import("…")`) resolving to
+it. A common layout is one directory per demo — `schema.ts`, `composition.ts`
+(default-exports the `Composition`), and `index.ts` (default-exports the
+`RegistryEntry`).
 
 **Every entry has a mandatory `id`.** The `id` is the **stable shared key**: the
 frontend and the render backend import the same registry module and address the
@@ -170,16 +175,18 @@ interface RegistryEntry<P = Record<string, unknown>> {
   description?: string;
   propsSchema?: KmSchema;      // kf / field descriptors → drives the auto-form
   defaultProps?: P;
-  /** Supply the Composition. Receives the live props signal so form edits
-      refresh without a rebuild. May be async → lazy / code-split. */
-  load(props: Signal<P>): Composition | Promise<Composition>;
+  /** The default-exported Composition, or a lazy loader resolving to one
+      (`() => import("…")`). Props live on the comp's `props` signal — the studio
+      pushes form edits via `comp.setProps`, so edits refresh without a rebuild. */
+  composition: Composition | (() => Composition | Promise<Composition>
+    | Promise<{ default: Composition }>);
 }
 
 export type Registry = {
   /** Lightweight catalog rows — id + metadata + load status, no compositions built. */
   entries(): RegistryEntry[];
-  /** Build/load (memoized) the composition for an id, wiring its props signal. */
-  load(id: string, props: Signal): Promise<Composition>;
+  /** Resolve (memoized) the composition for an id. */
+  load(id: string): Promise<Composition>;
   /** The already-loaded instance for an id, if any (sync). */
   peek(id: string): Composition | undefined;
 };
@@ -194,13 +201,16 @@ selecting an entry (or hitting its route) triggers the load and flips its status
 `idle → loading → ready`.
 
 ```ts
-// compositions.ts — imported by the studio UI AND the render worker
-import { defineRegistry } from "@konva-motion/studio/registry";
-import { intro } from "./compositions/intro";   // intro(props) => Composition
+// registry.ts — imported by the studio UI AND the render worker.
+// With the @konva-motion/vite plugin, HMR is injected automatically — you never
+// write `import.meta.hot`.
+import { defineRegistry } from "@konva-motion/studio";
 export default defineRegistry([
-  { id: "intro", title: "Intro", group: "Brand", load: intro },
+  // each module default-exports its Composition (which owns a `props` signal)
+  { id: "intro", title: "Intro", group: "Brand",
+    composition: () => import("./compositions/intro") },
   { id: "epic",  title: "Epic promo", group: "Brand",      // lazy / code-split
-    load: (props) => import("./compositions/epic").then((m) => m.epic(props)) },
+    composition: () => import("./compositions/epic") },
 ]);
 ```
 
@@ -220,9 +230,11 @@ duplicated on the entry):
 source of truth and can assert they match.)
 
 **Props & layers:**
-- *Props* — `load(props)` receives the live props `Signal`; the form writes it
-  and calls `comp.refresh()` (the demo's frame-preserving pattern), with the
-  form built from the entry's `propsSchema` + `defaultProps`.
+- *Props* — the Composition owns a live `props` signal (seeded from its
+  constructor `props` option). The form pushes edits with `comp.setProps`, which
+  re-applies the current frame (the frame-preserving pattern), with the form built
+  from the entry's `propsSchema` + `defaultProps`. The bare `<km-player>` can drive
+  props too via `player.setProps(...)`.
 - *Layers* — top-level `Sequence`s only, one track each; **kind** recognized as
   **Video / Audio / Group** (else generic `sequence`/`transition`) from an
   optional `kind` tag on the Sequence, falling back to node-content inspection.
@@ -463,11 +475,11 @@ existing `@konva-motion/renderer` API (`renderComposition`, `renderToStream`,
    description) lives on the id-keyed registry **entry**; the studio derives
    fps/duration/size/layers from the loaded Composition. No separate
    catalog-view layer; grouping reads from `entry.group`.
-7. **Where does the metadata live?** — RESOLVED (§3): on the **registry entry**,
-   defined at `defineRegistry` time — *not* on the Composition (reverted, to
-   support lazy load). Each entry has a **mandatory `id`** (shared FE/BE key +
-   route segment). The Composition stays clean; only runtime facts are read off
-   it once loaded.
+7. **Where does the metadata live?** — RESOLVED (§3): catalog metadata lives on
+   the **registry entry**, defined at `defineRegistry` time — *not* on the
+   Composition (reverted, to support lazy load). Each entry has a **mandatory
+   `id`** (shared FE/BE key + route segment). The Composition stays clean except
+   for its `props` signal; other runtime facts are read off it once loaded.
 8. **Compositions eager or lazy?** — RESOLVED (§3): each entry's
    `load(props): Composition | Promise<Composition>` may be **sync or async**,
    so compositions can be code-split and loaded on demand. `load(id)` is
