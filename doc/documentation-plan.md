@@ -131,27 +131,38 @@ an internal authoring reference.
 - [x] Add a short contributor note (`doc/authoring-demos.md`) describing the
       contract.
 
-## Step 1 — Getting Started (priority: current docs are actively wrong)
+## Step 1 — Getting Started (priority: current docs are actively wrong) ✅ DONE
 
 Pages: `introduction`, `installation`, `core-concepts`, `best-practices`.
 
-- [ ] **introduction** — pitch; frame-clock mental model (diagram of playhead
+- [x] **introduction** — pitch; frame-clock mental model (ASCII playhead diagram
       over `[from, from+duration)`); when to reach for it vs plain Konva /
-      single CSS tween; hero live demo.
-- [ ] **installation** — `npm install konva konva-motion`; konva-as-peer
+      single CSS tween; `hero` live demo. *Next-steps links repointed to
+      installation/core-concepts/best-practices (dropped the `components` link).*
+- [x] **installation** — `npm install konva @konva-motion/core`; konva-as-peer
       Callout; **rewritten** first composition (`Composition` + `Sequence` +
-      `register` + `interpolate`); mount into a container; `<Steps>` walkthrough.
-- [ ] **core-concepts** — `Composition({id, fps, durationInFrames, width,
-      height, loop})`; `Sequence({from, durationInFrames})` + range-gating; the
-      tick loop + `batchDraw`; `play()` (browser) vs `setFrame(n)` (offline).
-- [ ] **best-practices** — the recommended-way principles (see "Best practices
-      to teach throughout"); lead with "prefer konva-motion wrappers over raw
-      `Konva.*`" and "animate as a function of frame." Each principle gets a
-      one-line *why* + a do/don't snippet. Later pages link back here via
-      `<Callout>`s.
-- [ ] Demos: `hero`, `first-tween`, `frame-clock`, `range-gate`,
+      `register` + `interpolate`); mount via `setContainer` + `play()`; `<Steps>`
+      walkthrough rebuilt around the real API. The `first-tween` demo IS the page
+      example (View source). *Replaced the old non-existent `Timeline`/`tl.to`
+      API.*
+- [x] **core-concepts** — `Composition({id, fps, durationInFrames, width,
+      height, loop})`; `Sequence({from, durationInFrames})` + range-gating
+      (`range-gate` demo); local vs global frame; the tick loop (updaters → media
+      → layout → `batchDraw`, `frame-clock` demo); `play()` (browser) vs
+      `setFrame(n)` (anywhere).
+- [x] **best-practices** — the recommended-way principles (see "Best practices
+      to teach throughout"); leads with "prefer the core wrappers over raw
+      `Konva.*`" (`wrapper-vs-raw` demo) and "animate as a function of frame."
+      Each principle has a one-line *why* + a do/don't snippet. Later pages link
+      back here via `<Callout>`s.
+- [x] Demos: `hero`, `first-tween`, `frame-clock`, `range-gate`,
       `wrapper-vs-raw` (side-by-side: a raw `Konva.Rect` that won't reflow in a
-      `Flex` vs the core `Rect` that does).
+      `Flex` vs the core `Rect` that does). *All five added to `src/demos/`, use
+      core wrappers, verified live in `<km-player>`. Gotcha caught: the core
+      `Text` wrapper extends `Konva.Group`, so update its content with
+      `setText(...)`, not Konva's `.text(...)`.*
+- [x] Nav: appended `core-concepts` + `best-practices` to the Getting Started
+      group in `content/docs/meta.json`.
 
 ## Step 2 — Animating
 
