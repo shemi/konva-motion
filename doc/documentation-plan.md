@@ -2,8 +2,8 @@
 
 Tutorial-focused docs ("how to" + "when"), not an API reference. Built on the
 existing Fumadocs + React Router site in `packages/docs`, with live previews via
-the `<km-player>` web component. Tone follows Remotion (imperative, frame-first)
-and leans on Konva's config-object conventions.
+the `<km-player>` web component. Tone is imperative and frame-first, and leans on
+Konva's config-object conventions.
 
 ## Locked decisions
 
@@ -11,6 +11,11 @@ and leans on Konva's config-object conventions.
   `seq.register()` / `interpolate()` / `Easing`. The current
   `introduction.mdx` / `installation.mdx` teach a `Timeline.to()` API that does
   **not** exist in core — these get rewritten.
+- **Don't name Remotion in page prose.** Remotion is inspirational only. Credit
+  Remotion and Konva once, in a **Credits** section on the `introduction` page,
+  and nowhere else. No "Remotion-style" / "API-compatible with Remotion" /
+  "mirrors Remotion" phrasing in the published pages or demo comments. (Internal
+  design docs under `doc/` may still reference it.)
 - **Studio is a full section** (4 pages), banner-marked **Preview** (it is
   `0.0.0`, React-only, lives in `demo2`).
 - **Full live demo library** — one `.ts` composition per concept in
