@@ -336,16 +336,52 @@ Verified facts / corrections caught while building:
 - Forward links from the Drawing pages (`shapes.mdx`, `text.mdx`) to `/docs/flex`
   and `/docs/block` now resolve.
 
-## Step 5 — Media
+## Step 5 — Media ✅ DONE
 
 Pages: `video`, `audio`.
 
-- [ ] **video** — `Video({src, trimBefore/After, loop, muted, volume,
+- [x] **video** — `Video({src, trimBefore/After, loop, muted, volume,
       objectFit})`; frame-clock sync; multi-clip sync; server-render Callout
-      (skia backend).
-- [ ] **audio** — `Audio({src, name, volume, muted, trim…})`; `comp.mixer`
-      master volume/mute; layering music + voiceover; markers mention.
-- [ ] Demos: `video-sync` (ported), `audio-mixer` (ported).
+      (skia backend). Props table + `setVolume`/`setMuted`/`setPlaybackRate`;
+      `objectFit`/`objectPosition` cross-link to `images`.
+- [x] **audio** — `Audio({src, name, volume, muted, trim…})`; `comp.mixer`
+      master volume/mute; layering music + voiceover; frame-driven volume
+      automation via `register` + `interpolate` + `setVolume`. Dropped the
+      "markers mention" - there is no public marker API (see below).
+- [x] Demos: `video-sync` (ported), `audio-mixer` (ported). Both already lived in
+      `src/demos/` from Step 0; this step was page prose + nav + verification.
+- [x] Nav: inserted `---Media---` group + `video`/`audio` slugs after Layout in
+      `content/docs/meta.json`.
+- [x] Verified: docs `pnpm build` passes; both pages serve 200 and render; the
+      `video-sync` clip paints a real video frame on its content layer (canvas 1
+      colored, base layer separate); the `audio-mixer` visual layer animates
+      between frames (Music A ducked to 25%, Voice at 100% at frame 300). New nav
+      group + prev/next links resolve.
+
+Verified facts / corrections caught while building:
+- **No public marker API.** `media/media-marker.ts` (`MEDIA_MARK`/`VIDEO_MARK`/
+  `AUDIO_MARK`/`TICK_MARK`) is internal node-discovery only - nothing is exported
+  from the barrel. The planned "markers mention" was dropped; media nodes are
+  auto-discovered by the `Sequence`, no manual registration.
+- **`.volume`/`.muted` are read-only signals.** Both `Video` and `Audio` expose
+  `volume`/`muted` as `ReadonlySignal`s; set them with `setVolume(0..1)` /
+  `setMuted(bool)` (and `setPlaybackRate(n)`), never by assignment. Documented as
+  a `<Callout type="warn">` on the audio page.
+- **`Video` reuses `Image`'s fit logic.** `objectFit`/`objectPosition` are the
+  exact `layout/image.ts` controls, so the video page links to `images` rather
+  than re-documenting the fit modes.
+- **Effective level = master × track.** `comp.mixer` scales every channel; a
+  track is silent when either the master or the track is muted. The audio demo
+  drives intrinsic levels from the frame and the mixer applies master on top.
+- **Audio renders nothing.** An `Audio` node is `visible:false`/`listening:false`,
+  so its `Sequence` produces a blank canvas; the demo's visuals live on a
+  separate base `Sequence` (one Konva layer/canvas per sequence - relevant when
+  verifying, sample all canvases not just the first).
+- **Audio sequences added before the visual layer.** `audio-mixer` adds the five
+  audio sequences first, then the base visual `Sequence` last so visuals paint on
+  top (Konva layer order = add order).
+- Forward links to not-yet-authored `/docs/rendering` and `/docs/rendering-media`
+  left in place, matching how earlier steps linked forward before authoring.
 
 ## Step 6 — Transitions
 
