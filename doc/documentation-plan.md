@@ -289,18 +289,52 @@ Pages: `shapes`, `text`, `images`.
 - [ ] Demos: `shapes-gallery`, `shape-morph`, `typewriter`, `text-highlight`
       (ported), `image-objectfit`.
 
-## Step 4 — Layout
+## Step 4 — Layout ✅ DONE
 
 Pages: `flex`, `block`.
 
-- [ ] **flex** — flexbox via flexily; `flexDirection`/`justifyContent`/
+- [x] **flex** — flexbox via flexily; `flexDirection`/`justifyContent`/
       `alignItems`/`gap`/`padding`; child props
-      (`flexGrow`/`flexShrink`/`flexBasis`/`alignSelf`); reflows every tick —
-      animate `gap`/size and watch layout follow.
-- [ ] **block** ("box") — styled flex container: `background` (solid +
-      `{gradient}`), `borderSize`/`borderColor`/`borderStyle`, `cornerRadius`,
-      `shadow`; build a card.
-- [ ] Demos: `flex-layout` (ported), `flex-reflow`, `block-card`.
+      (`flexGrow`/`flexShrink`/`flexBasis`/`alignSelf`/`margin`); px/`%` sizing;
+      reflows every tick - animate `gap`/size and watch layout follow. Container
+      and child props each in a table; `flex-reflow` + `flex-layout` demos.
+- [x] **block** ("box") — styled flex container: `background` (solid +
+      `{gradient}` linear/radial), `borderSize`/`borderColor`/`borderStyle`,
+      `cornerRadius`, `shadow` (`{color,blur,offsetX,offsetY,opacity}`); built a
+      card with `block-card`. Note that Block is a Flex, so every flex prop
+      applies.
+- [x] Demos: `flex-layout` (ported, reused), `flex-reflow`, `block-card`. *Both
+      new demos run at `fps: 60`, loop, core wrappers only, dark-bg Sequence
+      first.*
+- [x] Nav: inserted `---Layout---` group + `flex`/`block` slugs after Drawing in
+      `content/docs/meta.json`.
+- [x] Verified: docs `pnpm build` passes; both pages load and every demo paints
+      (checked the per-layer Konva canvases directly - flex-reflow's four chips
+      with the grow-chip widened, block-card's gradient/border/shadow/text).
+
+Verified facts / corrections caught while building:
+- **One Sequence, one Konva layer, one canvas.** Each `Sequence` is its own
+  `Konva.Layer`, so the player has one `<canvas>` per active sequence. Sampling
+  "the canvas" only sees the bottom layer; the content layer is a separate
+  canvas. (Bit verification, not the page - noting so the next author doesn't
+  chase a "blank" demo that is actually painting on layer 2.)
+- **Layout roots must be DIRECT children of the Sequence.** `Sequence._apply`
+  calls `_kmComputeLayout()` only on its own top-level children
+  (`sequence.ts:73-75`), after running updaters. So the `Flex`/`Block` you
+  animate must sit directly under the Sequence that holds its `register` updater,
+  or it never reflows. Both demos put the layout root directly in its Sequence.
+- **`flexWidth`/`flexHeight`, not `.width()`.** Confirmed live: the Flex/Block
+  constructor stores `width`/`height` config as the `flexWidth`/`flexHeight`
+  attrs (`flex.ts:54-55`, `block.ts:115-116`); `layoutRoot` reads those, not
+  Konva's bbox `width()`. Animate the container's own size with
+  `setAttrs({ flexWidth })`. Documented as a `<Callout type="warn">` on the flex
+  page.
+- **Block always sizes to content.** `computeLayout()` calls `layoutRoot(this,
+  true)` so the background rect is never 0x0 even when the Block hugs its
+  children. The bg rect is `moveToBottom()`'d so children render on top
+  (`block.ts:129-167`).
+- Forward links from the Drawing pages (`shapes.mdx`, `text.mdx`) to `/docs/flex`
+  and `/docs/block` now resolve.
 
 ## Step 5 — Media
 
