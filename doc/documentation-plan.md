@@ -151,10 +151,13 @@ block                 (split — "box")
 video                 (new)
 audio                 (new)
 ---Transitions---
+transitions-setup     (new)   ← install @konva-motion/transitions (why + how)
 transitions           (new)
 ---Player---
+player-setup          (new)   ← install @konva-motion/player (npm + CDN/standalone)
 player                (rewrite/expand)
 ---Rendering---
+rendering-setup       (new)   ← install @konva-motion/renderer (native reqs, ./gl)
 rendering             (new)   ← headless MP4 export via @konva-motion/renderer
 rendering-media       (new)   ← server-side assets, fonts, shader transitions (./gl)
 ---Studio---  (Preview)
@@ -167,6 +170,15 @@ studio-rendering      (new)
 The existing `components.mdx` (design-system kitchen-sink) drops out of public
 nav; its role is replaced by the focused Drawing/Layout pages. Keep the file as
 an internal authoring reference.
+
+**Per-section setup pages (added after Step 7).** `player`, `transitions`, and
+`renderer` are separate npm packages. Each add-on section leads with a short
+`*-setup` page carrying the install "why + how" (exact `npm install` from the real
+peer deps, peer/native notes), so the usage pages stay compact and focused on the
+API. Core keeps `installation` as its Getting Started setup page; the add-on setup
+pages build on it and link back instead of repeating the konva-peer rule. The
+usage pages carry only a one-line setup `<Callout>` linking to their setup page.
+The player's CDN/standalone build moved from `player.mdx` to `player-setup.mdx`.
 
 ---
 
@@ -383,34 +395,127 @@ Verified facts / corrections caught while building:
 - Forward links to not-yet-authored `/docs/rendering` and `/docs/rendering-media`
   left in place, matching how earlier steps linked forward before authoring.
 
-## Step 6 — Transitions
+## Step 6 — Transitions ✅ DONE
 
 Page: `transitions`.
 
-- [ ] **transitions** — `TransitionSeries({composition})`; `.scene(...)` +
+- [x] **transitions** — `TransitionSeries({composition, from?})`; `.scene(...)` +
       `.transition({presentation, timing})`; geometric presentations (`fade`,
-      `slide`, `wipe`, `clockWipe`, `iris`, `flip`, `bookFlip`); `linearTiming`
-      vs `springTiming`; Callout on shader presentations (`dissolve`,
-      `crosswarp`, …) and the renderer `./gl` path.
-- [ ] Demos: `transition-fade`, `transition-slide`, `transition-spring`.
+      `slide`, `wipe`, `clockWipe`, `iris`, `flip`, `none`); `linearTiming`
+      vs `springTiming` (option tables); Callout on shader presentations
+      (`dissolve`, `crosswarp`, `bookFlip`, …) and the renderer `./gl` path; a
+      second Callout on the structural rules the series enforces.
+- [x] Demos: `transition-fade`, `transition-slide`, `transition-spring`. *All
+      run at `fps: 60`, loop, core wrappers only; each is a `TransitionSeries`
+      whose composition `durationInFrames` equals the net (Σ scenes − Σ
+      transitions) so the loop is seamless.*
+- [x] Dep + nav: added `@konva-motion/transitions` as a `workspace:*` dependency
+      of `@konva-motion/docs` (it was missing); inserted `---Transitions---` +
+      `transitions` between Media and Player in `content/docs/meta.json`.
+- [x] Verified: `pnpm build` (root) and `pnpm --filter @konva-motion/docs build`
+      pass; `/docs/transitions` serves 200 and renders with the new nav group;
+      all three players load (correct scene/canvas counts 3/3/2), no errors
+      beyond the benign multi-Konva dev warning. Stepped through each transition
+      window by forcing synchronous layer draws (see below).
 
-## Step 7 — Player
+Verified facts / corrections caught while building:
+- **`bookFlip` is Tier B (shader), not geometric.** The plan text listed it
+  under geometric presentations; `book-flip.ts` is built on `glTransition`
+  (a WebGL2 fragment shader). The page lists it with the shader set. Confirmed
+  geometric (Tier A) set is exactly: `fade`, `slide`, `wipe`, `clockWipe`,
+  `iris`, `flip`, `none` (`presentations/index.ts:1-8`).
+- **`@konva-motion/transitions` was not a docs dependency.** The demos import it,
+  so it had to be added to `packages/docs/package.json` (`workspace:*`) before the
+  page would build. The package was already built (`dist/` present).
+- **`TransitionSeries` requires the composition up front** (`{composition, from?}`)
+  because spring timings read `fps` and presentations read stage `width`/`height`
+  from it. `comp.add(series)` expands it (it implements `SequenceProvider`).
+- **Structural rules throw**: can't start/end with a transition, no two adjacent
+  transitions, and a transition must be ≤ each neighbour scene's duration (it
+  overlaps both). Documented as a `<Callout type="warn">`.
+- **Net duration = Σ scenes − Σ transitions.** Each incoming transition pulls its
+  scene back over the previous one by the transition length. The demo composition
+  lengths are sized to this so a looped player has no empty tail.
+- **`seq.register()` stacks** (Set of updaters); the series adds its presentation
+  updater after the scene `build`, so the layer transform it applies wins last.
+  Scene content can still animate child-node attrs.
+- Verification was done by pixel/position sampling, not screenshots: the preview
+  screenshot tool does not capture the player's `<canvas>` content in this headless
+  setup. Forcing `comp.getLayers().forEach(l => l.draw())` after `setFrame(n)` gives
+  a synchronous read. Confirmed fade cross-fades opacity (50/50 at the midpoint),
+  slide pushes the incoming layer in from the edge while the outgoing leaves, and
+  the spring overshoots past the target (negative x) then settles back.
+- Forward link to not-yet-authored `/docs/rendering-media` left in place (shader
+  Callout), matching how earlier steps linked forward before authoring.
+
+## Step 7 — Player ✅ DONE
 
 Page: `player` (rewrite/expand).
 
-- [ ] **player** — `<km-player>` attributes (`src`, `controls`, `loop`,
-      `autoplay`, `muted`, `volume`, `playbackrate`, `initialframe`); the `src`
-      module contract (a `?url` module the player `import()`s); composing custom
-      controls (`KmPlayerPlayButton`, `Progress`, `SoundControl`,
-      `createDefaultControls`); imperative API + events (`time`, `play`,
-      `seekTo`, `setProps`); the standalone `<script type="module">` CDN path.
-- [ ] Demos: `orbit` (exists), `player-custom-controls`.
+- [x] **player** — `<km-player>` attributes (`src`, `controls`, `loop`,
+      `autoplay`, `muted`, `volume`, `playbackrate`, `initialframe`, plus the
+      `no-*` / `double-click-fullscreen` flags); the `src` module contract (a
+      `?url` module the player `import()`s, default export = Composition / factory
+      / `{default}`); keyboard + click controls; the full imperative API (play/
+      pause/toggle/stop/seekTo/stepBy/volume/loop/fullscreen/setProps) and the
+      full event set (`frameupdate`/`timeupdate`/`play`/`pause`/`ended`/`seeked`/
+      `ratechange`/`volumechange`/`mutechange`/`fullscreenchange`/`scalechange`/
+      `loadstart`/`loaded`/`error`); composing custom controls (overlay +
+      `<km-player-controls>` building blocks, `getPlayerApi`/`playerContext`,
+      `createDefaultControls`); the standalone `<script type="module">` CDN path.
+      Scrubbed the em-dashes left over from the old page.
+- [x] Demos: `orbit` (exists, default controls) + `player-custom-controls` (new,
+      its own composition) shown live with a hand-built control bar.
+- [x] `<Demo>` enhancement: added an optional `children` prop
+      (`src/components/demo.tsx`) so a page can render custom control markup inside
+      `<km-player>` (drops the `controls` attr and the View-source toggle).
+      Extended the ambient JSX typing (`src/km-player.d.ts`) with all the
+      control-element tags so the MDX type-checks.
+- [x] Verified: docs `pnpm --filter @konva-motion/docs build` passes; `/docs/player`
+      serves 200 and both players mount independent compositions and paint (orbit
+      `#ffd166` core, the custom-controls scene's puck); the custom bar upgrades
+      with all six controls + the overlay play button in order; only the benign
+      multi-Konva dev warning in the console; `/docs/transitions` still renders its
+      three demos with the default bar (backward-compatible). No nav change needed
+      (the `---Player---` group + `player` slug already existed in `meta.json`).
+
+Verified facts / corrections caught while building:
+- **Custom controls are page markup, not a composition.** The `<Demo>` system loads
+  a composition module; control elements (`<km-player-controls>`, etc.) wrap the
+  player. So the "demo" for custom controls is the control markup passed as
+  `<Demo>` children, not a `player-custom-controls.ts` that *is* the controls.
+- **Two `<Demo>` instances cannot share one demo module.** A demo file that
+  default-exports a singleton `Composition` (like `orbit`) mounts into only one
+  player at a time: `setContainer` moves the stage, so a second `<Demo name="orbit">`
+  on the same page steals the canvas from the first (left it blank). Fixed by giving
+  the custom-controls example its **own** module (`player-custom-controls.ts`). A
+  demo meant to appear twice on one page would instead need a factory default export
+  (`export default () => buildComp()`), which the player unwraps per mount.
+- **Only six attributes are reactive.** `observedAttributes` is exactly `loop`,
+  `controls`, `muted`, `volume`, `playbackrate`, `src`; `autoplay` and
+  `initialframe` are read once at mount. Documented in a Callout.
+- **`controls` with user-supplied `<km-player-controls>` suppresses the default
+  bar** (`_reconcileControls` checks for a non-`data-km-default` controls child), so
+  the custom-controls demo omits `controls` and the player keeps the hand-built bar.
+- **Player uses light DOM**, so controls render into light DOM (no shadow root) and
+  the opt-in `styles.css` (loaded globally in docs `root.tsx`) styles them.
+- **CDN note:** jsdelivr/unpkg resolve files by path, so the inline `<script>` loads
+  `…/dist/player.global.js` directly; the `@konva-motion/player/standalone` export
+  subpath is for bundler resolution, mentioned separately.
+- Pre-existing, out of scope: `pnpm typecheck` (`tsc -b`) fails on Step 6's
+  `transition-fade.ts` (and siblings) under `noUncheckedIndexedAccess` for
+  `scenes[i]` access; unrelated to Step 7 (flagged as a follow-up task). The Step 7
+  files type-check clean.
 
 ## Step 8 — Rendering
 
-Pages: `rendering`, `rendering-media`. The renderer is Node/headless and
-**API-only (no CLI)** — these pages use annotated code blocks, not
-`<km-player>` previews. Where helpful, embed the resulting MP4 as a `<video>`.
+Pages: `rendering`, `rendering-media`. (`rendering-setup` already exists, authored
+in the post-Step-7 setup-page split: it carries the `@konva-motion/renderer`
+install, native requirements, the `/register` import, and the optional `gl` shader
+path. Step 8's pages link back to it and focus on the API, not install.) The
+renderer is Node/headless and **API-only (no CLI)** — these pages use annotated
+code blocks, not `<km-player>` previews. Where helpful, embed the resulting MP4 as
+a `<video>`.
 
 - [ ] **rendering** — "your composition → MP4 file." `import
       "@konva-motion/renderer/register"` (= `setupServerRendering()` at import)
@@ -482,7 +587,7 @@ Authoring contract: `src/demos/<name>.ts`, default export = `Composition` or
 | video | `video-sync`¹ |
 | audio | `audio-mixer`¹ |
 | transitions | `transition-fade`, `transition-slide`, `transition-spring` |
-| player | `orbit` (exists), `player-custom-controls` |
+| player | `orbit` (exists, default bar), `player-custom-controls` (new, own comp; custom bar = `<Demo>` children) |
 | studio | screenshots + one registry snippet |
 
 ¹ Already exists as a core demo — port into `src/demos/`.
