@@ -202,3 +202,30 @@ server render.
 on layers). If the studio needs interaction (selection/editing), make it opt-in
 so authoring still works. Measure `batchDraw` cost before/after on a
 many-shape composition.
+
+---
+
+## 10. Docs demo: no audio in the playhead video-sync demo
+
+**What** — The docs "video-sync" demo plays silently — no sound from either clip.
+
+**Why** — The demo configures `Video` with `muted: false` and expects audio
+during playback, but nothing is audible. Likely the `Video` node's audio isn't
+being routed to playback at all (the in-browser player drives frames but doesn't
+drive the underlying media element's audio), distinct from item **7** which is
+the server-render export path.
+
+**Where**
+- Demo: [video-sync.ts](../packages/docs/src/demos/video-sync.ts) — `videoBox`
+  sets `muted: false`; phases A/B/C across `seqTop`/`seqBottom`/`seqBoth`.
+- Embedded by [video.mdx](../packages/docs/content/docs/video.mdx) (`<Demo
+  name="video-sync" label="three clips driven by the playhead: top, then bottom,
+  then both" />`).
+- Core video playback/audio: [video/index.ts](../packages/core/src/media/video/index.ts),
+  and audio routing in [media/audio](../packages/core/src/media/audio).
+
+**Acceptance** — During player playback the unmuted `Video` clips are audible,
+correctly gated to their active phase (top, then bottom, then both), and respect
+`muted`/volume. Note browser autoplay-with-sound requires a user gesture — the
+demo plays on user interaction, so that constraint should already be satisfied.
+Related to item **6** (fps) for sync and item **7** (export audio).
