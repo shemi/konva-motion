@@ -43,7 +43,7 @@ The renderer pipeline (see [`renderer.md`](./renderer.md) and
 
 Two structural consequences:
 
-- **Two-pass + temp file.** We render video to `/tmp/km-render-*.mp4`, then run
+- **Two-pass + temp file.** We render video to `/tmp/smoove-render-*.mp4`, then run
   a *second* ffmpeg to mux audio. `renderToStream` makes a fragmented temp file
   and reads it back through a `PassThrough`.
 - **Audio is metadata-only during render.** `NullAudioSource`

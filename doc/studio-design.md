@@ -24,7 +24,7 @@ code lands.
 ## 1. Goal & the one big idea
 
 Studio lets any project stand up a "demo app" — a Remotion-Studio-like shell:
-a catalog of compositions on the left, a live `<km-player>` preview in the
+a catalog of compositions on the left, a live `<smoove-player>` preview in the
 center, an auto-generated props form, a scrubber, and a **Render** button that
 produces an MP4 — and then **extend or replace any piece of it**.
 
@@ -138,7 +138,7 @@ and `import registry from "./compositions"` without dragging in React. Only the
 | --- | --- | --- |
 | `@konva-motion/core` | peer | compositions, signals, `setFrame` |
 | `react` / `react-dom` | peer | UI half only |
-| `@konva-motion/player` | peer | `<km-player>` preview host |
+| `@konva-motion/player` | peer | `<smoove-player>` preview host |
 | `@konva-motion/renderer` | **optional** peer | only the *default* backend uses it; users can supply their own |
 | `konva` | peer | transitive, pinned by consumer |
 | `@base-ui-components/react` | dep | **headless UI primitives** the components are built on (Dialog, Menu, Select, Tabs, Slider, Switch, Toast, NumberField…) — accessible + Floating-UI positioned, unstyled |
@@ -233,7 +233,7 @@ source of truth and can assert they match.)
 - *Props* — the Composition owns a live `props` signal (seeded from its
   constructor `props` option). The form pushes edits with `comp.setProps`, which
   re-applies the current frame (the frame-preserving pattern), with the form built
-  from the entry's `propsSchema` + `defaultProps`. The bare `<km-player>` can drive
+  from the entry's `propsSchema` + `defaultProps`. The bare `<smoove-player>` can drive
   props too via `player.setProps(...)`.
 - *Layers* — top-level `Sequence`s only, one track each; **kind** recognized as
   **Video / Audio / Group** (else generic `sequence`/`transition`) from an
@@ -292,13 +292,13 @@ initial id; the consumer (or a built-in adapter) syncs it to their router
 (`react-router`, Next, hash, or none). Because the same `id` keys the backend,
 a deep-link, a preview, and a render request all address one composition.
 
-The React layer mirrors the player's compound-component model (`<km-player>` +
+The React layer mirrors the player's compound-component model (`<smoove-player>` +
 slotted control elements), in React over this store. **Default is fully
 styled** (Tailwind); users restyle by **overriding CSS variables**, not by
 rewriting markup. Controls are **Studio's own React components built on Base
 UI** by default — accessible and keyboard-navigable out of the box, themed with
-the same `--km-*` variables as the rest of the shell; the player's
-`<km-player-*>` control elements remain available for anyone who prefers them.
+the same `--smoove-*` variables as the rest of the shell; the player's
+`<smoove-player-*>` control elements remain available for anyone who prefers them.
 
 ```tsx
 import { Studio } from "@konva-motion/studio";
@@ -307,7 +307,7 @@ import registry from "./compositions";
 
 <Studio registry={registry} render={myTransport}>
   <Studio.Catalog />
-  <Studio.Preview />        {/* mounts <km-player>, sets .composition */}
+  <Studio.Preview />        {/* mounts <smoove-player>, sets .composition */}
   <Studio.Controls />
   <Studio.Timeline />
   <Studio.PropsPanel />
@@ -325,11 +325,11 @@ import registry from "./compositions";
   wants a totally different layout ignores the components and builds on the
   hooks — same "drop the defaults, keep the behavior" escape hatch the player
   offers.
-- **Theming:** components consume `--km-*` CSS variables (colors, radii,
+- **Theming:** components consume `--smoove-*` CSS variables (colors, radii,
   spacing, font). `studio.css` ships sensible defaults; overriding a handful of
   vars re-skins the whole shell. No Tailwind config required in the consumer —
-  the CSS is precompiled and scoped under a `.km-studio` root.
-- `<Studio.Preview>` reuses the React-wraps-`<km-player>` pattern already
+  the CSS is precompiled and scoped under a `.smoove-studio` root.
+- `<Studio.Preview>` reuses the React-wraps-`<smoove-player>` pattern already
   proven in `demo/src/studio/App.tsx` (a `ref`, set `.composition`, player
   handles letterbox/scale). The player's own control custom-elements remain
   available if a user prefers them over `<Studio.Controls>`.
@@ -464,7 +464,7 @@ existing `@konva-motion/renderer` API (`renderComposition`, `renderToStream`,
    backend implements SSE / short-polling / ws / in-process however it wants
    and pushes into the store. The demo shows one wiring as a copyable example.
 3. **Controls** — RESOLVED. Studio ships its own React controls by default
-   (themed via `--km-*`); the player's `<km-player-*>` elements remain
+   (themed via `--smoove-*`); the player's `<smoove-player-*>` elements remain
    available for anyone who prefers them.
 4. **Store implementation** — hand-rolled reactive store vs. a tiny dependency
    (e.g. zustand). Leaning hand-rolled over `core`'s existing `Signal`
@@ -504,7 +504,7 @@ existing `@konva-motion/renderer` API (`renderComposition`, `renderToStream`,
    `LeftPanel`, `Stage`, `Timeline`, `RightPanel` (Tabs), `SchemaForm`
    (Slider/Switch/Select/NumberField), render `Dialog`s, `RenderQueue`, `Toast`
    `Toasts`, `TweaksPanel`; wire a studio-owned portal container so Base UI
-   popups inherit the `.km-studio` scope + theme; author `studio.css` (Tailwind).
+   popups inherit the `.smoove-studio` scope + theme; author `studio.css` (Tailwind).
 5. **Demo swap** — re-point `demo/src/studio` at the package; delete the
    duplicated prototype; wire a real Render button end-to-end.
 
@@ -522,7 +522,7 @@ positioning come from **Base UI** (`@base-ui-components/react`) — we own only
 the look. We don't ship hand-rolled `Dropdown`/`Modal`/`Toggle`/click-outside
 (the spike's versions are discarded). Base UI parts are unstyled and take
 `className` + expose `data-*` state attributes (`data-open`, `data-checked`,
-`data-highlighted`…), which our `.km-studio`-scoped, CSS-variable-themed
+`data-highlighted`…), which our `.smoove-studio`-scoped, CSS-variable-themed
 stylesheet targets. The `render` prop lets us swap the underlying element where
 the design needs a specific tag. This keeps the "fully styled by default,
 themeable via CSS variables" decision while getting a11y for free.
@@ -679,11 +679,11 @@ real build:
   positioning. We style Base UI parts via `className` + their `data-*` state
   attributes; the spike's CSS (class names + tokens) largely carries over by
   re-targeting it at those parts.
-- **Styles scope.** Ship the CSS under a `.km-studio` root wrapper (vars +
+- **Styles scope.** Ship the CSS under a `.smoove-studio` root wrapper (vars +
   scoped selectors) so the opt-in `styles.css` doesn't touch the host page —
   same opt-in pattern as `@konva-motion/player`. Base UI portals (menus,
   dialogs, toasts) render to `document.body` by default — render them into a
-  studio-owned portal container (or add the `.km-studio` class to the portal)
+  studio-owned portal container (or add the `.smoove-studio` class to the portal)
   so the scoped styles + theme vars still apply.
 - **Repo fit.** `tsconfig.base.json` sets `noUncheckedIndexedAccess` — array
   indexing needs guards/`!`. Package builds with `tsc -b`; CSS is copied to

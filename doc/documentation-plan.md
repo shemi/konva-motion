@@ -2,7 +2,7 @@
 
 Tutorial-focused docs ("how to" + "when"), not an API reference. Built on the
 existing Fumadocs + React Router site in `packages/docs`, with live previews via
-the `<km-player>` web component. Tone is imperative and frame-first, and leans on
+the `<smoove-player>` web component. Tone is imperative and frame-first, and leans on
 Konva's config-object conventions.
 
 ## Locked decisions
@@ -19,7 +19,7 @@ Konva's config-object conventions.
 - **Studio is a full section** (4 pages), banner-marked **Preview** (it is
   `0.0.0`, React-only, lives in `demo2`).
 - **Full live demo library** — one `.ts` composition per concept in
-  `packages/docs/src/demos/`, rendered live in `<km-player>` and shown as
+  `packages/docs/src/demos/`, rendered live in `<smoove-player>` and shown as
   source from the *same file* (single source of truth).
 - **All demos run at 60fps.** New demos use `fps: 60`; when you need a specific
   real-time pace, size `durationInFrames` (and any frame anchors / interpolate
@@ -194,7 +194,7 @@ The player's CDN/standalone build moved from `player.mdx` to `player-setup.mdx`.
 - [x] Formalize the **demo authoring contract**: each demo is
       `src/demos/<name>.ts` whose default export is a `Composition` (or a
       `() => Composition` factory). `<Demo>` renders it live via `?url` into
-      `<km-player src>` and shows source via `?raw` — from the same file.
+      `<smoove-player src>` and shows source via `?raw` — from the same file.
 - [x] Decide + (optionally) implement the `<Demo name="...">` single-prop
       helper that resolves both `?url` and `?raw` from one name, replacing the
       two-import-per-page boilerplate. *Implemented via two eager
@@ -235,7 +235,7 @@ Pages: `introduction`, `installation`, `core-concepts`, `best-practices`.
       back here via `<Callout>`s.
 - [x] Demos: `hero`, `first-tween`, `frame-clock`, `range-gate`,
       `wrapper-vs-raw`. *All five added to `src/demos/`, use core wrappers, run at
-      `fps: 60`, verified live in `<km-player>`.*
+      `fps: 60`, verified live in `<smoove-player>`.*
       - `wrapper-vs-raw` shows **flexGrow**: as a Flex widens, the core `Rect`
         (`flexGrow: 1`) fills the row while a raw `Konva.Rect` can't and leaves a
         gap. *(NOT the original "raw won't reflow" idea — that was found false;
@@ -452,7 +452,7 @@ Verified facts / corrections caught while building:
 
 Page: `player` (rewrite/expand).
 
-- [x] **player** — `<km-player>` attributes (`src`, `controls`, `loop`,
+- [x] **player** — `<smoove-player>` attributes (`src`, `controls`, `loop`,
       `autoplay`, `muted`, `volume`, `playbackrate`, `initialframe`, plus the
       `no-*` / `double-click-fullscreen` flags); the `src` module contract (a
       `?url` module the player `import()`s, default export = Composition / factory
@@ -461,15 +461,15 @@ Page: `player` (rewrite/expand).
       full event set (`frameupdate`/`timeupdate`/`play`/`pause`/`ended`/`seeked`/
       `ratechange`/`volumechange`/`mutechange`/`fullscreenchange`/`scalechange`/
       `loadstart`/`loaded`/`error`); composing custom controls (overlay +
-      `<km-player-controls>` building blocks, `getPlayerApi`/`playerContext`,
+      `<smoove-player-controls>` building blocks, `getPlayerApi`/`playerContext`,
       `createDefaultControls`); the standalone `<script type="module">` CDN path.
       Scrubbed the em-dashes left over from the old page.
 - [x] Demos: `orbit` (exists, default controls) + `player-custom-controls` (new,
       its own composition) shown live with a hand-built control bar.
 - [x] `<Demo>` enhancement: added an optional `children` prop
       (`src/components/demo.tsx`) so a page can render custom control markup inside
-      `<km-player>` (drops the `controls` attr and the View-source toggle).
-      Extended the ambient JSX typing (`src/km-player.d.ts`) with all the
+      `<smoove-player>` (drops the `controls` attr and the View-source toggle).
+      Extended the ambient JSX typing (`src/smoove-player.d.ts`) with all the
       control-element tags so the MDX type-checks.
 - [x] Verified: docs `pnpm --filter @konva-motion/docs build` passes; `/docs/player`
       serves 200 and both players mount independent compositions and paint (orbit
@@ -481,7 +481,7 @@ Page: `player` (rewrite/expand).
 
 Verified facts / corrections caught while building:
 - **Custom controls are page markup, not a composition.** The `<Demo>` system loads
-  a composition module; control elements (`<km-player-controls>`, etc.) wrap the
+  a composition module; control elements (`<smoove-player-controls>`, etc.) wrap the
   player. So the "demo" for custom controls is the control markup passed as
   `<Demo>` children, not a `player-custom-controls.ts` that *is* the controls.
 - **Two `<Demo>` instances cannot share one demo module.** A demo file that
@@ -494,8 +494,8 @@ Verified facts / corrections caught while building:
 - **Only six attributes are reactive.** `observedAttributes` is exactly `loop`,
   `controls`, `muted`, `volume`, `playbackrate`, `src`; `autoplay` and
   `initialframe` are read once at mount. Documented in a Callout.
-- **`controls` with user-supplied `<km-player-controls>` suppresses the default
-  bar** (`_reconcileControls` checks for a non-`data-km-default` controls child), so
+- **`controls` with user-supplied `<smoove-player-controls>` suppresses the default
+  bar** (`_reconcileControls` checks for a non-`data-smoove-default` controls child), so
   the custom-controls demo omits `controls` and the player keeps the hand-built bar.
 - **Player uses light DOM**, so controls render into light DOM (no shadow root) and
   the opt-in `styles.css` (loaded globally in docs `root.tsx`) styles them.
@@ -514,7 +514,7 @@ in the post-Step-7 setup-page split: it carries the `@konva-motion/renderer`
 install, native requirements, the `/register` import, and the optional `gl` shader
 path. Step 8's pages link back to it and focus on the API, not install.) The
 renderer is Node/headless and **API-only (no CLI)** — these pages use annotated
-code blocks, not `<km-player>` previews. *Result `<video>` embeds were skipped
+code blocks, not `<smoove-player>` previews. *Result `<video>` embeds were skipped
 (code-only): there is no static-asset/`<video>` pattern in the docs and it would
 mean committing a binary; the headless nature is conveyed in prose instead.*
 
@@ -591,13 +591,13 @@ Pages: `studio-overview`, `studio-setup`, `studio-interface`,
 - [ ] **studio-rendering** — `Studio.RenderDialog`, `Studio.ExportFrameDialog`,
       `Studio.RenderQueue`; render backend prop; how the in-app render queue
       submits to `@konva-motion/renderer` (link back to the Rendering section).
-- [ ] Assets: Studio is React (not a `<km-player>` composition) — use static
+- [ ] Assets: Studio is React (not a `<smoove-player>` composition) — use static
       screenshots for v1; revisit live React embed/iframe of demo2 later.
 
 ## Step 10 — Verify & ship
 
 - [ ] `pnpm build` the docs.
-- [ ] Load every page; confirm each `<km-player>` demo imports and plays (use
+- [ ] Load every page; confirm each `<smoove-player>` demo imports and plays (use
       preview tools); fix failures.
 - [ ] Screenshot proof of key pages.
 - [ ] Update `doc/README.md` if any public API examples changed.

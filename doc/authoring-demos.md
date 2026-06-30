@@ -1,7 +1,7 @@
 # Authoring docs demos
 
 Every live demo in the documentation is a real composition that runs in the
-`<km-player>` web component and is shown as source from the *same file* — one
+`<smoove-player>` web component and is shown as source from the *same file* — one
 source of truth, no copy-paste drift.
 
 ## The contract
@@ -54,7 +54,7 @@ In any `.mdx` page, reference the demo by its file name:
 `<Demo>` ([src/components/demo.tsx](../packages/docs/src/components/demo.tsx))
 resolves two views of the file from its name via `import.meta.glob`:
 
-- the served **`?url`** module the `<km-player src=…>` dynamically `import()`s at
+- the served **`?url`** module the `<smoove-player src=…>` dynamically `import()`s at
   runtime (the same path a genuinely remote composition takes), and
 - the **`?raw`** source string behind the "View source" toggle.
 

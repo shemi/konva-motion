@@ -72,7 +72,7 @@ comp.play();
   auto-pausing at the end. Default `false`.
 - `container?` — Konva's stage container. Optional in the browser: when
   omitted, a detached `<div>` is created so the composition can be mounted
-  later via `setContainer` (e.g. handed to `<km-player>`). In non-browser
+  later via `setContainer` (e.g. handed to `<smoove-player>`). In non-browser
   runtimes there's no DOM, so frames are driven with `setFrame`/`renderFrame`.
 
 The instance **is** a `Konva.Stage`. Adds itself to the stage via a
@@ -384,10 +384,10 @@ The composition is passed as a **property** (it's an object), and the player
 re-parents the stage into its own canvas via Konva's `setContainer`.
 
 ```ts
-import "@konva-motion/player"; // registers <km-player> and the controls
+import "@konva-motion/player"; // registers <smoove-player> and the controls
 import "@konva-motion/player/styles.css"; // opt-in default styling (headless without it)
 
-const player = document.querySelector("km-player");
+const player = document.querySelector("smoove-player");
 player.composition = comp; // Composition — no container needed; core makes one
 ```
 
@@ -395,7 +395,7 @@ Instead of assigning a composition imperatively, point the player at a **remote
 ESM module** with the `src` attribute — like `<video src>`:
 
 ```html
-<km-player src="https://cdn.example/bouncing.js" controls></km-player>
+<smoove-player src="https://cdn.example/bouncing.js" controls></smoove-player>
 ```
 
 The module's **default export** is resolved to a live `Composition`. It may be a
@@ -422,29 +422,29 @@ imperatively-assigned `composition` property takes precedence over `src`.
 > `script-src` permits the origin.
 
 ```html
-<km-player controls loop autoplay>
-  <km-player-overlay>
-    <km-player-play-button size="large"></km-player-play-button>
-  </km-player-overlay>
-  <km-player-controls>
-    <km-player-controls-row>
-      <km-player-progress></km-player-progress>
-    </km-player-controls-row>
-    <km-player-controls-row>
-      <km-player-play-toggle-button></km-player-play-toggle-button>
-      <km-player-sound-control collapsed></km-player-sound-control>
-      <km-player-time></km-player-time>
-      <km-player-space grow></km-player-space>
-      <km-player-loop-button></km-player-loop-button>
-      <km-player-fullscreen-button></km-player-fullscreen-button>
-    </km-player-controls-row>
-  </km-player-controls>
-</km-player>
+<smoove-player controls loop autoplay>
+  <smoove-player-overlay>
+    <smoove-player-play-button size="large"></smoove-player-play-button>
+  </smoove-player-overlay>
+  <smoove-player-controls>
+    <smoove-player-controls-row>
+      <smoove-player-progress></smoove-player-progress>
+    </smoove-player-controls-row>
+    <smoove-player-controls-row>
+      <smoove-player-play-toggle-button></smoove-player-play-toggle-button>
+      <smoove-player-sound-control collapsed></smoove-player-sound-control>
+      <smoove-player-time></smoove-player-time>
+      <smoove-player-space grow></smoove-player-space>
+      <smoove-player-loop-button></smoove-player-loop-button>
+      <smoove-player-fullscreen-button></smoove-player-fullscreen-button>
+    </smoove-player-controls-row>
+  </smoove-player-controls>
+</smoove-player>
 ```
 
-`<km-player controls>` with no `<km-player-controls>` child renders a default
+`<smoove-player controls>` with no `<smoove-player-controls>` child renders a default
 control bar. **Light DOM** + opt-in CSS means every part is overridable with
-plain selectors (`.km-player__btn`, `km-player-controls`, …).
+plain selectors (`.smoove-player__btn`, `smoove-player-controls`, …).
 
 - **Attributes:** `src`, `controls`, `loop`, `autoplay`, `muted`, `volume`,
   `playbackrate`, `initialframe`, `no-click-to-play`, `no-space-key`,

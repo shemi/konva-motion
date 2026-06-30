@@ -1,12 +1,12 @@
-# Plan: load a Composition from a remote file in `<km-player>`
+# Plan: load a Composition from a remote file in `<smoove-player>`
 
 ## Goal
 
-Add a `src` attribute to `<km-player>` so it can load and run a Composition
+Add a `src` attribute to `<smoove-player>` so it can load and run a Composition
 from a remote ESM module, mirroring `<video src>`:
 
 ```html
-<km-player src="https://cdn.example/my-comp.js" controls></km-player>
+<smoove-player src="https://cdn.example/my-comp.js" controls></smoove-player>
 ```
 
 ## Resolution contract
@@ -20,12 +20,12 @@ The remote file is a bundled ESM module whose **default export** is a
 
 The player dynamically `import()`s the URL, resolves the default export through
 that ladder, then assigns `this.composition = comp` — reusing the **entire
-existing mount/bind path** in `packages/player/src/km-player.ts` (the
+existing mount/bind path** in `packages/player/src/smoove-player.ts` (the
 `composition` setter at line 67). No engine / core changes are needed.
 
 ## Changes
 
-### 1. `packages/player/src/km-player.ts`
+### 1. `packages/player/src/smoove-player.ts`
 
 - Add `"src"` to `observedAttributes`.
 - Add `src` getter/setter (attribute-backed, like `loop` / `controls`).

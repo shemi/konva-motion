@@ -218,7 +218,7 @@ standalone bundle).
   `konva-motion` and **0** brand `Km*` identifiers in source, with bare
   `konva` / `Konva` imports untouched.
 
-## Phase 3 — Web-component tags, CSS class prefix & file renames
+## Phase 3 — Web-component tags, CSS class prefix & file renames ✅ DONE (2026-06-30)
 
 - **Tags:** `<km-player>` → `<smoove-player>` and every sub-element tag
   (`km-player-controls`, `km-player-sound-control`, `km-player-progress`, …) →
@@ -237,6 +237,55 @@ standalone bundle).
   - `packages/docs/src/km-player.d.ts` → `smoove-player.d.ts`
 
 **Verify:** `pnpm build` + `pnpm dev` smoke — the demo renders `<smoove-player>`.
+
+**Status / notes:**
+
+- **Method: one blanket literal `km-` → `smoove-` substring replacement** across
+  **57 files** (perl `-i`). Safe because the `km-` prefix only ever appears as a
+  brand token — verified there is **no** `[a-zA-Z]km-` (i.e. `km-` is never
+  embedded mid-word) anywhere in scope. A substring sub also can't touch bare
+  `konva` / `Konva` / `.konvajs-content` (no `km-` in them), so the guard holds
+  for free. This swept tags **and** sub-element tags **and** CSS classes/parts in
+  one pass, incl. `customElements.define("smoove-player-*")` and the container
+  registry (`packages/player/src/containers.ts`).
+- **Scope decision — did *all* `km-` repo-wide now, not just the listed files.**
+  The Phase 4 grep gate forbids residual `km-`, and the `km-` tokens also live in
+  the docs live-demo `<km-player>` tags (`audio.mdx`, `components.mdx`,
+  `dynamic-props.mdx`, `introduction.mdx`, `player/index.mdx`,
+  `player/install.mdx`, `transitions/guide.mdx`) and several `doc/*.md`. Since the
+  sub only touches `km-` substrings, the `konva-motion` / `@konva-motion` prose in
+  those same files is **left intact for Phase 4**. **Excluded** from the sub: this
+  plan doc itself (`doc/rename-to-smoove-plan.md` — keeps `km-` as examples) and
+  `doc/_design_extracted/` (design bundle, already `smoove-`).
+- **3 source files renamed via `git mv`.** `packages/player/src/index.ts` already
+  pointed at `./km-player.js`, so the same blanket sub rewrote its import +
+  re-export to `./smoove-player.js` — the rename and the import update agree. The
+  two `.d.ts` files are **ambient** (picked up by tsconfig `include` globs, no
+  path importers), so renaming them inside `src/` needs no other edits.
+- **Temp-dir prefix renamed too:** `mkdtempSync(…, "km-renderer-demo-")` →
+  `"smoove-renderer-demo-"` in `packages/renderer/examples/render-demo.ts` (it's
+  a `km-` brand token the plan lists under CSS classes/parts; harmless fs name).
+- **Guard / false-positive check:** the only odd-looking `km-*` strings
+  (`km-silvery`, `km-render-end`) live **exclusively in `demo/build/` artifacts**
+  (minified/mangled CSS), which are regenerated and were not edited. Bare
+  `konva` / `Konva` untouched — **36** `konvajs-content` / `window.Konva` /
+  `from "konva"` refs preserved.
+- ✅ `pnpm build` green (exit 0) across all packages incl. player's Vite build +
+  standalone `player.global.js` (which now emits `smoove-player*` tags). Grep
+  confirms **0** residual `km-` in source/docs (excluding the two intentional
+  exclusions above).
+- ✅ `pnpm dev` smoke. **Note:** `pnpm dev` runs the **studio demo (demo2)**,
+  which renders via the `<Studio>` React component + a Konva stage — it does
+  **not** embed the `<smoove-player>` web component (that lives in docs/player).
+  Verified the studio renders cleanly: "SmooveStudio" branding, `smoove-studio`
+  root class, working `smoove-studio-portal`, a composition opens to a live Konva
+  stage (2 canvases + `.konvajs-content`), **zero console errors**. Separately
+  confirmed the player web component is wired: `customElements.get("smoove-player")`
+  is truthy, `"km-player"` is gone, and the built bundle defines the full
+  `smoove-player*` tag family.
+- ⚠️ Port gotcha: the demo Vite is pinned to `:5174`; with `:5174` (and the
+  preview harness's `:5173`) busy it landed on `:5175`. Drive the preview at the
+  port the dev log prints, not `:5173`.
 
 ## Phase 4 — Folder, docs & prose sweep
 

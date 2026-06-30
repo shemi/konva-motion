@@ -28,7 +28,7 @@ today because core has no concept of a loop sub-range.
   [scrubber.tsx](../packages/studio/src/components/timeline/scrubber.tsx),
   [transport.tsx](../packages/studio/src/components/timeline/transport.tsx)
   (`Looping ${regionActive ? "region" : "playback"}`).
-- Player passthrough: [km-player.ts](../packages/player/src/km-player.ts)
+- Player passthrough: [smoove-player.ts](../packages/player/src/smoove-player.ts)
   (`toggleLoop`/`isLooping`), [player-api.ts](../packages/player/src/player-api.ts).
 
 **Acceptance** — Add a loop-region concept to `Composition` (e.g.
