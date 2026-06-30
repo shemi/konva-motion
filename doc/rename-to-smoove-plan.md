@@ -535,7 +535,7 @@ no FOUT regressions; SSR render (if applicable) embeds the faces.
 - ⏳ Still pending from Group A: the working-folder rename `konva-motion/` →
   `smoove/` (Phase 4, must be done out-of-session) — unrelated to Phase 6.
 
-## Phase 7 — Docs site repaint
+## Phase 7 — Docs site repaint ✅ DONE (2026-06-30)
 
 Convert the existing KmStudio look to the Smoove system (`@smoove/docs`):
 
@@ -547,6 +547,104 @@ Convert the existing KmStudio look to the Smoove system (`@smoove/docs`):
 
 **Verify:** docs build + visual smoke against `Smoove Brand Brief.dc.html` and
 `Smoove Lockup.dc.html` (palette, type, lockup, gradient usage).
+
+**Status / notes:**
+
+- **Decision (locked this session): the docs are now cream-first.** Default theme
+  is the warm cream canvas (`#FFF6EC`) with grape-ink text (`#261733`); dark mode
+  is **rebuilt on grape ink**. The toggle stays. Previously the docs were
+  dark-default (KmStudio violet `#7c5cff`).
+- **The docs CSS is token-driven**, so the core of the repaint was retokenizing.
+  Two distinct theming layers, both repainted:
+  1. **Home-page chrome** (`packages/docs/src/styles/base.css` +
+     `home.css`) — keyed off `--accent`, `--bg-0..3`, `--ink-1..3`, `--line`,
+     `--code-*`, `--tok-*`. **Swapped the two token blocks**: `:root` is now the
+     cream/light theme (`color-scheme: light`, `--bg-0: #FFF6EC`,
+     `--ink-1: #261733`, `--accent: #FF5640` coral / `--accent-2: #15CDA8` mint,
+     `--radius-ui: 16px`, warm `--tok-*`); the old `.light` block became `.dark`
+     with grape-ink surfaces (`--bg-0: #261733`, panel `#34204A`, border
+     `#43305A`, accents lifted for contrast). Also flipped the `.light`-keyed
+     rules to `.dark` (`::selection`, the sun/moon toggle swap), and the header
+     comment now describes the Smoove system.
+  2. **Fumadocs content pages** (sidebar/TOC/prose/callouts) are themed by
+     `--color-fd-*` (from `fumadocs-ui/css/neutral.css` + `preset.css`), **not**
+     base.css — so they're overridden in `packages/docs/src/app.css`: `:root`
+     (light) → cream/grape/coral, `.dark` → grape ink, plus a `.dark #nd-sidebar`
+     override (neutral.css ships a grayscale sidebar override that would otherwise
+     read cold).
+- **Header lockup → the colored (gradient) mark, no chip.** First pass put the
+  mark in a gradient *chip* (white bars on a coral→mint tile); revised to show the
+  **official colored mark directly** per the Lockup spec ("gradient mark +
+  wordmark"). `BrandMark` (`components/icons.tsx`) gained a `gradient` prop that
+  injects the inline `<linearGradient id="smoove-mark-grad">` (coral `#FF5640` →
+  mint `#15CDA8`, `gradientUnits="userSpaceOnUse"`, matches `smoove-mark.svg`) and
+  strokes the bars with it; the sunshine dot stays `#FFC23C`. Default stays
+  `currentColor` (e.g. `demo.tsx` keeps it). Applied `gradient` in all three
+  lockups: home header (`brand.tsx`), footer (`home.tsx`), docs navbar (`Logo` in
+  `lib/layout.shared.tsx`).
+- **Lockup sizing verified against the design size ladder** (`Smoove
+  Lockup.dc.html`): mark box ≈ **1.6× the wordmark font-size**, gap ≈ 0.4× (XL
+  54px word→84px mark/18 gap; M 21→34/9; S 14→22/7). So home (16px wordmark) →
+  **26px** mark box with the SVG filling it (was a 15px glyph inside a 26px chip),
+  gap **8px**; docs navbar (15px wordmark) → **24px** mark (`size-6`). Removed the
+  chip background/shadow from `.brand__mark`.
+- **Third split-token straggler fixed:** the **footer** wordmark in `home.tsx`
+  also rendered `konva<span class="dim">-motion</span>` (same split-node bug as the
+  header/navbar) → `Smoove`.
+- **Hero gradient moment:** `.hero h1 .grad` now uses the Smoove gradient
+  (`linear-gradient(102deg,#FF5640,#15CDA8)`), display-size only — the one focal
+  gradient on the page. Toned the `.hero__glow` down (it was tuned for a dark
+  stage) so it's a soft warm halo on cream, not a wash.
+- **Fonts:** Phase 6 wired the brand faces into base.css, but base.css **only
+  loads on the home route** — docs content pages had no brand font wiring. Added
+  a minimal typography block to `app.css` (global): `--font-display: Comfortaa`,
+  `body` → Hanken Grotesk, `h1–h6` → Comfortaa, `code/pre/kbd/samp` → JetBrains
+  Mono. Verified the docs `<h1>` computes to Comfortaa and body to Hanken.
+- **Hero focal animation recolored:** `src/demos/hero-bg.ts` (the live
+  `<smoove-player>` aurora behind the headline) was emerald/cyan/violet/pink — now
+  a **coral↔mint field with sunshine sparks** (the Smoove gradient as
+  atmosphere). The hero's displayed code sample (`home.tsx`) orb fill →
+  `#FF5640`. **The in-content feature demos** (`block-card.ts`,
+  `shapes-gallery.ts`, `block-borders.ts`) keep their intentionally varied
+  rainbow palettes — they *demonstrate* arbitrary colors, so recoloring them
+  would defeat their purpose. (One incidental old-accent `#7c5cff` remains in
+  those demos; left on purpose.)
+- **Straggler brand fixes found while repainting (in-scope for the lockup):**
+  - `lib/layout.shared.tsx` docs-navbar `Logo` still rendered
+    `konva<span>-motion</span>` — a **split-token** residue (`konva` + `-motion`
+    across two JSX nodes) the earlier greps missed (same bug class fixed in
+    `brand.tsx` in Phase 5). → `Smoove`.
+  - **GitHub org typo in three spots:** `github.com/smoove/smoove` →
+    `github.com/smoove-dev/smoove` in `lib/layout.shared.tsx`,
+    `components/home-header.tsx`, `routes/home.tsx`.
+- **Theme mechanism:** next-themes (via Fumadocs `RootProvider`,
+  `attribute="class"`) adds `.light`/`.dark` on `<html>`. The new structure
+  (`:root` = light, `.dark` = dark) matches Fumadocs' own convention, so SSR /
+  first paint (no class) renders cream. Set `RootProvider theme={{ defaultTheme:
+  "light" }}` in `root.tsx` so cream is the canonical default.
+- **Guard held:** bare `konva` / `Konva` / `window.Konva` / `from "konva"`
+  untouched; no shared token module (per-package values inlined). The
+  `#FF5640`/`#15CDA8`/`#FFC23C` hexes are inlined per the brand reference.
+- ✅ **Verified:** `pnpm --filter @smoove/docs build` green; `biome check` clean
+  on all touched files. Browser smoke (docs dev on **:5176** — the
+  `.claude/launch.json` `docs` target; note the port differs from the demo's
+  :5174 / preview's :5173): **first paint = cream** (`htmlClass "light"`,
+  `body` bg `#FFF6EC`, text `#261733`); home hero shows the single
+  Smoove-gradient focal moment + coral/mint aurora; both lockups render the
+  edge-dot mark on a gradient chip + **"Smoove"** (no "konva-motion"); toggle →
+  grape-ink dark (`#261733`); `/docs/introduction` content page on the cream
+  Fumadocs theme (`--color-fd-background #fff6ec`, `--color-fd-primary #ff5640`,
+  `<h1>` Comfortaa, body Hanken) and grape ink in dark. **Console clean** apart
+  from the **pre-existing** "Several Konva instances detected" warning (the
+  standalone player bundles Konva while demos import it too — documented in
+  earlier phases, not a regression).
+- ⚠️ **For Phase 8/9:** the embedded `<smoove-player>` chrome (control bar,
+  letterbox) is still **dark-tuned** (`player.css`) — it reads as a dark video
+  frame on the cream page. That's Phase 8's job (player/studio/demo repaint), as
+  scoped. The docs-page demo *content* (e.g. the introduction's teal/purple
+  circles) is illustrative, not brand chrome.
+- ⏳ Still pending from Group A: the working-folder rename `konva-motion/` →
+  `smoove/` (Phase 4, must be done out-of-session) — unrelated to Phase 7.
 
 ## Phase 8 — Player, Studio & demo repaint
 
