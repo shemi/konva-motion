@@ -655,7 +655,7 @@ Convert the existing KmStudio look to the Smoove system (`@smoove/docs`):
 - ⏳ Still pending from Group A: the working-folder rename `konva-motion/` →
   `smoove/` (Phase 4, must be done out-of-session) — unrelated to Phase 7.
 
-## Phase 8 — Player, Studio & demo repaint
+## Phase 8 — Player, Studio & demo repaint ✅ DONE (2026-06-30)
 
 - **`player.css`:** brand colors; gradient on the render/play focal accent;
   rounded control surfaces; restrained shadows.
@@ -668,6 +668,106 @@ Convert the existing KmStudio look to the Smoove system (`@smoove/docs`):
 
 **Verify:** `pnpm dev` — player controls, studio shell, and demo match the mock;
 one gradient focal moment per surface.
+
+**Status / notes:**
+
+- **Locked decision (with the user): the studio KEEPS its dark pro-editor shell**
+  — accent-only recolor, **not** the cream "warm paper" flip the mock literally
+  shows. Rationale: the studio's surfaces are token-driven but a full cream flip
+  would touch surface usage across ~168 components (high risk, much iteration),
+  the dark canvas already matches the mock's **dark preview surface**, and a dark
+  editor is a legit pro-tool pattern. So Phase 8 = swap the legacy accents to the
+  Smoove palette + make each surface's one gradient focal moment coral→mint;
+  surfaces stay dark-neutral. *(A future pass could still cream-flip the studio
+  shell if desired — out of scope here.)*
+- **Studio `studio.css:41-42` is the cascade source.** Swapped
+  `--color-accent: #7c5cff → #ff5640` (coral) and `--color-accent-2: #9579ff →
+  #15cda8` (mint). The `@theme` block is the single source of truth, so this
+  cascades to **all 42** `bg-accent` / `text-accent` / `accent-soft` /
+  `accent-line` / `from-accent`/`to-accent` usages across components, and the
+  derived `--color-accent-soft` / `--color-accent-line` tints regenerate
+  automatically (`studio.css:62-65`). Verified in the compiled
+  `dist/styles/studio.css`: `--color-accent:#ff5640`, `--color-accent-2:#15cda8`,
+  `--color-accent-soft:#ff564029` (coral @16%) + the color-mix `@supports`
+  variant. Surfaces/scrollbars left dark-neutral (the optional grape-warming of
+  `--color-bg-*` was **not** applied — deferred; accent swap was the required
+  change). `--color-good`/`--warn`/`--danger` untouched (semantic, not brand).
+- **Gradient focal moment came for free.** The `Button` primitive's `tone="primary"`
+  variant is **already** `bg-gradient-to-b from-accent-2 to-accent`
+  (`components/button/button.tsx:15`), so the Render button (`render-dialog.tsx:206`,
+  `tone="primary"`) and every primary CTA became the mint→coral Smoove gradient
+  on the token swap — no separate edit. The one visible primary CTA + the brand
+  mark are the gradient moments; all other accent UI stays solid coral.
+- **Sidebar `Logo` de-chipped → colored mark (`components/brand/brand.tsx`).**
+  The `Logo` was a 22px gradient **square chip** with a white edge-dot glyph
+  inside. Per the user, dropped the chip (bg/shadow/rounded box) and now render
+  the **colored mark directly**: a self-contained `BrandMark` SVG strokes the
+  four bars with an inline coral→mint `<linearGradient>` (matching
+  `smoove-mark.svg`) and keeps the sunshine dot `#FFC23C`, sized 24px to match
+  the 15px wordmark (the lockup's ~1.6× ratio). Mirrors the docs `BrandMark`
+  (Phase 7) incl. the **per-instance `useId()` gradient id** so multiple marks
+  can't collide into an invisible `url(#id)` stroke. The exported `Logo`/`Brand`
+  API is unchanged (the now-unused `icon` prop is still accepted for compat); the
+  old generic `spark` glyph in `icon/paths.tsx` is left in place (no longer used
+  by the Logo). The favicon keeps its ink chip on purpose (small-size legibility).
+- **Hardcoded violet spots the cascade missed — fixed by hand:**
+  - `components/render/export-frame-dialog.tsx:87` — preview tile gradient
+    `…,#7c5cff66` → `…,rgba(255,86,64,.4)` (coral).
+  - `components/render/render-queue.tsx:86` — active-row (non-still) icon-chip
+    gradient `#2a2550` (violet) → `#3a1f1a` (warm coral); the `isStill` branch was
+    already warm `#4d2f1a` and its `color: var(--color-accent-2)` now reads mint.
+  - `lib/constants.ts:11` — timeline `sequence` layer-kind color `#7c5cff` →
+    `#ff5640` (coral). Other layer kinds (audio/video/group/transition) keep their
+    distinct semantic colors.
+  - `components/schema-form/field.tsx:96` — default color-swatch palette
+    `#7c5cff` → `#ff5640`; other swatches left.
+- **Player `player.css`:** kept the black video letterbox (correct for video).
+  `.smoove-player__fill` (`:210`) `#5b8cff` → `linear-gradient(90deg,#ff5640,
+  #15cda8)` — the scrubber is the player's natural one gradient moment, growing
+  coral→mint as it plays. Loop-active (`:122`) `#5b8cff` → `#15cda8` (mint =
+  "looping/live" state, distinct from the coral-start fill). Control-bar scrim,
+  white icons/volume thumb, and the JetBrains-Mono time readout (already Phase-6)
+  read fine over the dark stage and were left. This resolves Phase 7's flagged
+  "embedded player still dark-tuned on the cream docs page" — its *accent* is now
+  on-brand (the chrome stays dark, which is correct for a video frame).
+- **Demo `demo/src/app.css:65`:** `.smoove-doc code` (inline code) `#9579ff` →
+  `#ff5640`, matching the docs repaint. The boot/doc background gradient
+  (`app.css:28`) is neutral-dark and was left as-is.
+- **Deliberately NOT touched — demo *scene content* keeps its `#7c5cff`.** The
+  `demo/src/compositions/**` files (Pulse, ribbon, shapes-playground, accents.ts)
+  still use `#7c5cff` as default Konva fills / accent props. These are **example
+  animation content** (what a user builds in the canvas), not brand chrome —
+  recoloring them defeats their purpose, exactly the Phase-7 precedent for the
+  in-content feature demos. The chrome stylesheet `app.css` is clean. *(If the
+  old brand violet as the default scene accent ever feels off, it's a content
+  refresh, separate from this rebrand.)*
+- **No dark-mode lift needed** — true brand coral `#FF5640` / mint `#15CDA8` read
+  fine on the dark neutral shell, so the Phase-7 lifted values
+  (`#FF6B57`/`#2EE0BD`) were not used.
+- **Guard held:** bare `konva` / `Konva` / `window.Konva` / `from "konva"`
+  untouched (29 refs in player/demo preserved). No shared token module — brand
+  hexes inlined per-package.
+- ✅ **Build green** (`pnpm build`, exit 0) across all packages incl. player's
+  Vite build + standalone bundle and the studio Tailwind CSS step. **Biome clean**
+  on all touched files. Guard grep: **0** residual `#7c5cff`/`#9579ff`/`#5b8cff`
+  in `packages/studio/src` + `packages/player/src` + `demo/src/app.css` (the only
+  remaining hits are the intentional demo *composition content* above).
+- ⚠️ **Live browser smoke was blocked by a concurrent session.** Both relevant
+  dev-server ports were held by **another chat's running servers** — demo2 on
+  `:5174` (the pinned demo Vite port) and docs on `:5176` — which this session's
+  preview tools can't reach. Starting duplicates on alternate ports would require
+  editing the pinned Vite/launch ports and competing with that live session, so
+  it was skipped. For a pure color-token swap the build + **compiled-CSS**
+  verification above is conclusive (the literal `#ff5640`/`#15cda8` values and the
+  player gradient are present in the shipped `dist`). **For Phase 9:** re-confirm
+  visually in-browser once the ports are free — sidebar `Logo` mint→coral, accent
+  UI coral (not violet), single gradient primary CTA, coral timeline sequence
+  blocks, player scrubber coral→mint + mint loop button.
+- ⏳ Still pending from Group A: the out-of-session working-folder rename
+  `konva-motion/` → `smoove/` (Phase 4) — unrelated to Phase 8.
+- ⏳ Carried to Phase 9: the pre-existing, non-rebrand `pnpm check` errors Phase 4
+  flagged (gitignored `packages/docs/.source/*` Fumadocs output + vendored
+  `.agents/skills/.../assets/*.tsx`).
 
 ## Phase 9 — Integration gate (the "one big rebrand")
 
