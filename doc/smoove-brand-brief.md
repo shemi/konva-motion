@@ -88,18 +88,20 @@ makes it good:
 
 ## Visual direction
 
-For the wordmark, color, and asset look (feeds the logo + existing
-`smoove-{mark,icon-*}.svg` assets):
+For the wordmark, color, and asset look (feeds the logo + the
+`smoove-mark{,-dark,-light}.svg` assets):
 
-- **Motion-as-identity.** The strongest motif is *afterimage / motion trail* —
-  the double **o** in smo**o**ve is a gift: ghosted, offset, or blurred to read
-  as movement frozen mid-glide. The existing `icon-afterimages` mark already
-  points here; make it the signature.
+- **Motion-as-identity.** The shipped mark is the **edge-dot sunshine mark** —
+  four timeline bars tapering to a play triangle, with the sunshine keyframe dot
+  arriving just past the last bar. It reads as movement resolving onto a
+  keyframe: smooth motion, frozen at the moment it lands. (This supersedes the
+  earlier afterimage-trail exploration.)
 - **Wordmark:** lowercase, rounded, friendly geometric sans. Lowercase keeps it
   casual and smooth; rounded terminals echo eased motion (no hard stops).
 - **Color:** keep the **gradient** mark as the hero — a flowing two-tone gradient
   reads as motion and energy, on brand with "smooth." Pair with a clean
-  black/white wordmark for type-heavy contexts (`mark-black` / `mark-white`).
+  ink/paper wordmark for type-heavy contexts (`smoove-mark-dark` /
+  `smoove-mark-light`).
 - **Feel:** generous spacing, eased curves, nothing rigid. If a shape could be a
   keyframe in a smooth animation, it belongs.
 

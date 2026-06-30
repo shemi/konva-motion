@@ -386,7 +386,7 @@ Per-package styling, landing on the same branch. Consumes the
 [design assets](#design-assets-source-of-truth) above; values from
 [§ Brand reference](#brand-reference).
 
-## Phase 5 — Brand assets (logo marks + favicon)
+## Phase 5 — Brand assets (logo marks + favicon) ✅ DONE (2026-06-30)
 
 - Replace the old `konva-motion-{mark-white,mark-black,mark-gradient,…}.svg`
   assets with the new **edge-dot sunshine mark** — four timeline bars tapering to
@@ -400,6 +400,65 @@ Per-package styling, landing on the same branch. Consumes the
 
 **Verify:** marks render crisp at favicon size through hero size; gradient,
 dark, and light variants each keep the sunshine dot.
+
+**Status / notes:**
+
+- **Asset files** in `assets/`: `git rm`'d all **5** old `konva-motion-*.svg`
+  (the 3 marks **plus** `icon-afterimages` / `icon-circle` — the new identity is
+  just the three marks; the old play-triangle-trail explorations are dropped).
+  Copied the 3 new marks verbatim from the design bundle
+  (`doc/_design_extracted/.../project/smoove-mark{,-dark,-light}.svg`) →
+  `assets/smoove-mark.svg` (gradient), `smoove-mark-dark.svg` (ink on paper),
+  `smoove-mark-light.svg` (paper on ink). Animated mark **deferred** as planned.
+- **The mark art was live in 3 code spots**, all still the **old afterimage
+  trail** — each swapped to the edge-dot geometry:
+  1. `packages/docs/public/favicon.svg` — full rewrite (was a teal-gradient
+     afterimage on a circle, `aria-label="konva-motion"`).
+  2. docs `BrandMark` in `packages/docs/src/components/icons.tsx`.
+  3. studio `spark` glyph in `packages/studio/src/components/icon/paths.tsx`
+     (the studio sidebar `Logo`). *Not named in the plan's bullet (which says
+     "docs"), but the studio `Logo` consumes the same mark — left as old
+     afterimages it'd be a half-done logo. Swapped + documented here; the
+     **studio palette/surfaces repaint stays Phase 8.***
+- **Favicon ≠ a bare copy of the mark.** Browser tabs are light *or* dark, so a
+  transparent thin-bar mark would wash out. The favicon is the gradient mark on
+  a **grape-ink (`#261733`) rounded chip** (an approved "ink" background from the
+  Lockup spec — the gradient holds on dark), with bars bumped to stroke-width 10
+  and the sunshine dot to r=4.5 for small-size legibility. Verified it still
+  reads as a coherent mark at 16px (TODO item #4 — "logo legibility at small
+  sizes" — is now largely addressed; noted in `doc/TODO.md`).
+- **Phase-5 vs Phase-7/8 boundary held:** `BrandMark` and studio `spark` render
+  their **bars in `currentColor`** (so each host's existing chip color still
+  drives them) **+ the sunshine dot in its fixed `#FFC23C`**. Only the *mark
+  geometry* changed here; the surrounding chrome (the docs `.brand__mark`
+  emerald→cyan box, the studio `Logo` accent-gradient box) is **left for the
+  Phase 7/8 repaint**. Interim look: edge-dot bars in white inside the old
+  gradient chip — transitional, on purpose.
+- **Wordmark text:** docs `brand.tsx` still rendered `konva<span>-motion</span>`
+  — a residual brand token the Phase 4 grep **missed** because it's split across
+  two JSX text nodes (`konva` + `-motion`), so the literal `konva-motion`
+  substring never appeared on the line. Changed to `Smoove` (matching the brand
+  wordmark casing); dropped the now-unused `.dim` two-tone span (Comfortaa
+  wordmark styling is Phase 6/7).
+- **Prose references updated:** `doc/TODO.md:87-90` (old asset filenames →
+  `smoove-mark{,-dark,-light}.svg` + new consumer paths) and
+  `doc/smoove-brand-brief.md` "Visual direction" — its mark section still
+  prescribed the *afterimage trail* as "the signature" (now **superseded** by
+  the chosen edge-dot mark); rewrote that bullet to describe the shipped mark and
+  fixed the `icon-afterimages`/`mark-black`/`mark-white` filenames. `README.md`
+  carries **no** mark/asset references — nothing to change there.
+- **Guard:** bare `konva` / `Konva` untouched; no shared token module introduced
+  (per-package values inlined per the brand reference).
+- ✅ **Verified:** `pnpm --filter @smoove/studio build` + `pnpm --filter
+  @smoove/docs build` both green. Browser smoke (`pnpm dev`, demo2/SmooveStudio):
+  the sidebar `Logo` now renders the edge-dot mark (4 `<line>`s, `scale(0.15)`,
+  dot `#FFC23C`), **zero console errors**. Visual proof rendered all four SVGs
+  (favicon @64 + @16, gradient/dark/light marks): crisp, each keeps the sunshine
+  dot. ⚠️ Port gotcha persists — demo Vite is pinned to `:5174` but the preview
+  harness drives `:5173`; temporarily set the port to `:5173` to verify in-browser
+  and **restored it to `:5174`** afterward.
+- ⏳ Still pending from Group A: the working-folder rename `konva-motion/` →
+  `smoove/` (Phase 4, must be done out-of-session) — unrelated to Phase 5.
 
 ## Phase 6 — Brand fonts
 

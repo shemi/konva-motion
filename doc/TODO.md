@@ -84,13 +84,19 @@ CLAUDE.md's "update doc/README.md on API change" rule that this skill must track
 
 **Why** — Current marks lose detail when scaled down.
 
-**Where** — Existing assets in [assets/](../assets):
-`konva-motion-icon-afterimages.svg`, `konva-motion-icon-circle.svg`,
-`konva-motion-mark-{black,gradient,white}.svg`. Studio/docs consume them
-(`packages/docs/public/`, [studio paths.tsx](../packages/studio/src/components/icon/paths.tsx)).
+**Where** — Brand assets in [assets/](../assets):
+`smoove-mark.svg` (gradient), `smoove-mark-dark.svg`, `smoove-mark-light.svg`.
+Studio/docs consume the mark art (`packages/docs/public/favicon.svg`, docs
+`BrandMark` in [icons.tsx](../packages/docs/src/components/icons.tsx), and the
+`spark` glyph in [studio paths.tsx](../packages/studio/src/components/icon/paths.tsx)).
 
 **Acceptance** — A simplified small-size variant (fewer strokes / higher
 contrast), wired as the favicon in docs and studio. Verify at 16/32/48px.
+
+**Status** — Largely addressed by the Smoove rebrand (Phase 5): the new
+edge-dot mark is far simpler than the old afterimage trail, and the favicon
+sits on a grape-ink chip with thicker bars so it holds at 16px. Revisit only
+if the bars still muddy at the smallest sizes.
 
 ---
 
